@@ -70,10 +70,24 @@ st.markdown("""
   section[data-testid="stSidebar"] > div {
       background: linear-gradient(175deg, #0b1220 0%, #1a2744 100%) !important;
   }
-  /* Sidebar top padding — align logo with main title */
-  section[data-testid="stSidebar"] > div:first-child { padding-top: 0.6rem !important; }
-  /* Logo blend */
-  section[data-testid="stSidebar"] img { mix-blend-mode: screen !important; border-radius: 6px; }
+  /* Sidebar — strip top & side padding so logo bleeds edge-to-edge */
+  section[data-testid="stSidebar"] > div:first-child {
+      padding-top: 0 !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+  }
+  /* Logo full-bleed, no border radius on edges */
+  section[data-testid="stSidebar"] img {
+      mix-blend-mode: screen !important;
+      display: block !important;
+      width: 100% !important;
+      border-radius: 0 !important;
+  }
+  /* Restore horizontal padding for everything below the logo */
+  section[data-testid="stSidebar"] > div:first-child > div > *:not(:first-child) {
+      padding-left: 1rem !important;
+      padding-right: 1rem !important;
+  }
 
   /* Sidebar text */
   section[data-testid="stSidebar"] p,
@@ -142,7 +156,7 @@ st.markdown("""
   section[data-testid="stSidebar"] [data-testid="stFileUploader"] * { color: rgba(255,255,255,0.85) !important; }
 
   /* ── Main layout ── */
-  .block-container { padding-top: 3rem !important; }
+  .block-container { padding-top: 5rem !important; }
 
   /* ── Submission list buttons ── */
   .stButton > button {
