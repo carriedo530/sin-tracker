@@ -297,7 +297,7 @@ def has_notes(note):
 
 # ── Notes modal ───────────────────────────────────────────────────────────────
 
-@st.dialog("Internal Notes", width="large")
+@st.dialog("Internal Notes")
 def notes_dialog(sub_id, row, notes_data):
     note  = notes_data.get(sub_id, {})
     today = date.today()
@@ -538,7 +538,7 @@ def main():
         st.divider()
         uploaded = st.file_uploader("Upload new export (.csv or .xlsx)", type=["csv", "xlsx", "xls"])
         st.divider()
-        view = st.radio("View", ["📋  All Submissions", "📌  Tracked"], label_visibility="collapsed")
+        view = st.radio("View", ["📋  All Submissions", "📝  Notes"], label_visibility="collapsed")
         st.divider()
         st.markdown("<p style='font-size:0.78rem;opacity:0.6;margin-bottom:4px;'>FILTERS</p>", unsafe_allow_html=True)
         search        = st.text_input("🔍 Search name, ticker, email")
