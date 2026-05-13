@@ -91,6 +91,8 @@ def get_worksheet(tab_name, headers):
 # ── Submissions persistence ───────────────────────────────────────────────────
 
 def load_submissions_from_sheet():
+    if "submissions_cache" in st.session_state:
+        return st.session_state.submissions_cache
     ws = get_worksheet("Submissions", SUBMISSION_COLS)
     if ws is None:
         return None
@@ -100,6 +102,7 @@ def load_submissions_from_sheet():
     df = pd.DataFrame(records)
     df["Submission Time"] = pd.to_datetime(df["Submission Time"], utc=True, errors="coerce")
     df["Submission Date"] = df["Submission Time"].dt.strftime("%Y-%m-%d")
+    st.session_state.submissions_cache = df
     return df
 
 
@@ -107,33 +110,38 @@ def save_submissions_to_sheet(df):
     ws = get_worksheet("Submissions", SUBMISSION_COLS)
     if ws is None:
         return
-    rows = []
-    for _, row in df.iterrows():
-        rows.append([safe(row.get(c, "")) for c in SUBMISSION_COLS])
+    rows = [[safe(row.get(c, "")) for c in SUBMISSION_COLS] for _, row in df.iterrows()]
     ws.clear()
     ws.append_row(SUBMISSION_COLS)
     if rows:
         ws.append_rows(rows)
+    st.session_state.submissions_cache = df
 
 
 # ── Notes persistence ─────────────────────────────────────────────────────────
 
 def load_notes():
+    if "notes_cache" in st.session_state:
+        return st.session_state.notes_cache
     ws = get_worksheet("Notes", NOTE_COLS)
     if ws is not None:
         records = ws.get_all_records()
-        return {
+        notes = {
             r["submission_id"]: {k: r.get(k, "") for k in NOTE_COLS[1:]}
             for r in records if r.get("submission_id")
         }
-    if os.path.exists(NOTES_FILE):
+    elif os.path.exists(NOTES_FILE):
         with open(NOTES_FILE) as f:
-            return json.load(f)
-    return {}
+            notes = json.load(f)
+    else:
+        notes = {}
+    st.session_state.notes_cache = notes
+    return notes
 
 
 def save_note(notes_data, sub_id, note):
     notes_data[sub_id] = note
+    st.session_state.notes_cache = notes_data
     ws = get_worksheet("Notes", NOTE_COLS)
     if ws is not None:
         row_values = [sub_id] + [note.get(k, "") for k in NOTE_COLS[1:]]
