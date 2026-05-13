@@ -52,8 +52,6 @@ st.markdown("""
   #MainMenu { display: none !important; }
   [data-testid="stMainMenuButton"] { display: none !important; }
   header[data-testid="stHeader"] { background: transparent !important; }
-  /* Hide image expand button on sidebar logo */
-  [data-testid="stImageActionButtons"] { display: none !important; }
   /* Hide heading anchor link icons */
   [data-testid="stHeadingActionElements"],
   [data-testid="stHeadingActionElements"] * { display: none !important; visibility: hidden !important; opacity: 0 !important; }
@@ -71,25 +69,6 @@ st.markdown("""
   section[data-testid="stSidebar"] > div:first-child,
   section[data-testid="stSidebar"] > div {
       background: linear-gradient(175deg, #0b1220 0%, #1a2744 100%) !important;
-  }
-  /* Logo — full-width, contained zoom so wave stays fully visible */
-  section[data-testid="stSidebar"] [data-testid="stImage"] {
-      margin-left: -1.2rem !important;
-      margin-right: -1.2rem !important;
-      margin-top: -4rem !important;
-      width: calc(100% + 2.4rem) !important;
-      height: 160px !important;
-      overflow: hidden !important;
-      display: flex !important;
-      align-items: center !important;
-  }
-  section[data-testid="stSidebar"] img {
-      mix-blend-mode: screen !important;
-      display: block !important;
-      width: 100% !important;
-      border-radius: 0 !important;
-      transform: scale(1.6) !important;
-      transform-origin: center center !important;
   }
 
   /* Sidebar text */
@@ -701,7 +680,12 @@ def main():
     notes_data = load_notes()
 
     with st.sidebar:
-        st.image(LOGO_URL, use_container_width=True)
+        st.markdown(
+            f"<div style='margin:-4rem -1.2rem 0 -1.2rem;height:160px;overflow:hidden;display:flex;align-items:center;'>"
+            f"<img src='{LOGO_URL}' style='width:100%;display:block;mix-blend-mode:screen;"
+            f"transform:scale(1.6);transform-origin:center center;'></div>",
+            unsafe_allow_html=True,
+        )
         search = st.text_input("Search", placeholder="🔍 Search name, ticker, email", label_visibility="collapsed")
         st.divider()
         view = st.radio("View", ["📋  All Submissions", "📝  Notes", "⭐  Favorites"], label_visibility="collapsed")
