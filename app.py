@@ -630,7 +630,7 @@ def render_detail(row, notes_data):
     with h_left:
         star_icon = "⭐" if is_starred else "☆"
         st.markdown(
-            f"<h2 style='color:#1a2744;font-family:Georgia,serif;margin-bottom:4px;'>"
+            f"<h2 style='color:#1a2744;font-family:Georgia,serif;margin-bottom:4px;font-size:1.6rem;'>"
             f"{html.escape(ticker)}  —  {html.escape(name)}</h2>",
             unsafe_allow_html=True,
         )
@@ -803,7 +803,7 @@ def main():
 
     # ── Header ──
     st.markdown(
-        "<h2 style='color:#1a2744;font-family:Georgia,serif;margin-top:0;margin-bottom:0.3rem;'>"
+        "<h2 style='color:#1a2744;font-family:Georgia,serif;margin-top:0;margin-bottom:0.3rem;font-size:1.8rem;'>"
         "Specialist Insights Network</h2>",
         unsafe_allow_html=True,
     )
