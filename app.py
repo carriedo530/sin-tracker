@@ -120,13 +120,27 @@ st.markdown("""
   section[data-testid="stSidebar"] [data-testid="stRadio"] label { color: rgba(255,255,255,0.82) !important; }
   section[data-testid="stSidebar"] [data-testid="stRadio"] [data-baseweb="radio"] div { border-color: rgba(255,255,255,0.4) !important; }
 
-  /* File uploader */
+  /* File uploader — compact single button */
   section[data-testid="stSidebar"] [data-testid="stFileUploader"] {
-      background: rgba(255,255,255,0.05) !important;
-      border: 1px dashed rgba(255,255,255,0.2) !important;
-      border-radius: 8px !important;
+      background: transparent !important;
+      border: none !important;
+      padding: 0 !important;
   }
-  section[data-testid="stSidebar"] [data-testid="stFileUploader"] * { color: rgba(255,255,255,0.7) !important; }
+  section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] {
+      border: 1px solid rgba(201,160,64,0.45) !important;
+      background: rgba(201,160,64,0.1) !important;
+      border-radius: 6px !important;
+      padding: 2px 6px !important;
+      min-height: unset !important;
+  }
+  section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzoneInstructions"] { display: none !important; }
+  section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] > div { gap: 0 !important; padding: 2px 0 !important; }
+  section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] button {
+      width: 100% !important; font-size: 0.8rem !important;
+      background: transparent !important; border: none !important;
+      color: rgba(255,255,255,0.85) !important; padding: 4px 8px !important;
+  }
+  section[data-testid="stSidebar"] [data-testid="stFileUploader"] * { color: rgba(255,255,255,0.85) !important; }
 
   /* ── Main layout ── */
   .block-container { padding-top: 1.6rem !important; }
@@ -590,16 +604,16 @@ def main():
         st.image(LOGO_URL, use_container_width=True)
         st.markdown(
             "<p style='color:rgba(255,255,255,0.45);font-size:0.7rem;letter-spacing:0.14em;"
-            "text-transform:uppercase;margin:2px 0 0 2px;'>Specialist Insights Network</p>",
+            "text-transform:uppercase;margin:2px 0 6px 2px;'>Specialist Insights Network</p>",
             unsafe_allow_html=True,
         )
-        st.divider()
-        uploaded = st.file_uploader("Upload new export (.csv or .xlsx)", type=["csv", "xlsx", "xls"])
+        search = st.text_input("Search", placeholder="🔍 Search name, ticker, email", label_visibility="collapsed")
         st.divider()
         view = st.radio("View", ["📋  All Submissions", "📝  Notes", "⭐  Favorites"], label_visibility="collapsed")
         st.divider()
+        uploaded = st.file_uploader("📤 Upload new export", type=["csv", "xlsx", "xls"], label_visibility="collapsed")
+        st.divider()
         st.markdown("<p style='font-size:0.78rem;opacity:0.6;margin-bottom:4px;'>FILTERS</p>", unsafe_allow_html=True)
-        search        = st.text_input("🔍 Search name, ticker, email")
         hide_test     = st.checkbox("Hide test entries", value=True)
         sector_filter = []
         status_filter = []
