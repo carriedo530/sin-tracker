@@ -94,33 +94,26 @@ st.markdown("""
       -webkit-text-fill-color: #1a2744 !important;
   }
   section[data-testid="stSidebar"] [data-testid="stTextInput"] input::placeholder { color: #8896a5 !important; }
-  /* Multiselect inputs — keep transparent/white text */
-  section[data-testid="stSidebar"] [data-baseweb="select"] input {
-      background: transparent !important;
-      color: rgba(255,255,255,0.85) !important;
-      -webkit-text-fill-color: rgba(255,255,255,0.85) !important;
-  }
-  /* Multiselect / select boxes */
+  /* Multiselect / select boxes — white background, dark text */
   section[data-testid="stSidebar"] [data-baseweb="select"] > div,
   section[data-testid="stSidebar"] [data-baseweb="select"] > div > div {
-      background: rgba(255,255,255,0.09) !important;
-      border-color: rgba(255,255,255,0.2) !important;
-      color: rgba(255,255,255,0.85) !important;
+      background: #ffffff !important;
+      border-color: rgba(255,255,255,0.3) !important;
+      color: #1a2744 !important;
   }
-  section[data-testid="stSidebar"] [data-baseweb="select"] span,
-  section[data-testid="stSidebar"] [data-baseweb="tag"] span {
-      color: rgba(255,255,255,0.9) !important;
+  section[data-testid="stSidebar"] [data-baseweb="select"] input {
+      background: transparent !important;
+      color: #1a2744 !important;
+      -webkit-text-fill-color: #1a2744 !important;
   }
+  section[data-testid="stSidebar"] [data-baseweb="select"] span { color: #1a2744 !important; }
+  section[data-testid="stSidebar"] [data-baseweb="select"] [aria-selected] { color: #1a2744 !important; }
+  section[data-testid="stSidebar"] [data-baseweb="select"] svg { fill: #8896a5 !important; }
   section[data-testid="stSidebar"] [data-baseweb="tag"] {
-      background: rgba(201,160,64,0.35) !important;
-      border-color: rgba(201,160,64,0.5) !important;
+      background: rgba(26,39,68,0.12) !important;
+      border-color: rgba(26,39,68,0.25) !important;
   }
-  /* Placeholder text */
-  section[data-testid="stSidebar"] [data-baseweb="select"] [aria-selected] {
-      color: rgba(255,255,255,0.85) !important;
-  }
-  /* SVG arrows/icons inside select */
-  section[data-testid="stSidebar"] [data-baseweb="select"] svg { fill: rgba(255,255,255,0.5) !important; }
+  section[data-testid="stSidebar"] [data-baseweb="tag"] span { color: #1a2744 !important; }
 
   /* Radio nav */
   section[data-testid="stSidebar"] [data-testid="stRadio"] label { color: rgba(255,255,255,0.82) !important; }
