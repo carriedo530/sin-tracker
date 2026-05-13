@@ -88,7 +88,7 @@ def get_worksheet(tab_name, headers):
     return ws
 
 
-# ── Submissions persistence ───────────────────────────────────────────────────
+# ── Submissions ───────────────────────────────────────────────────────────────
 
 def load_submissions_from_sheet():
     if "submissions_cache" in st.session_state:
@@ -118,7 +118,7 @@ def save_submissions_to_sheet(df):
     st.session_state.submissions_cache = df
 
 
-# ── Notes persistence ─────────────────────────────────────────────────────────
+# ── Notes ─────────────────────────────────────────────────────────────────────
 
 def load_notes():
     if "notes_cache" in st.session_state:
@@ -147,8 +147,7 @@ def save_note(notes_data, sub_id, note):
         row_values = [sub_id] + [note.get(k, "") for k in NOTE_COLS[1:]]
         records = ws.get_all_records()
         existing = next(
-            (i + 2 for i, r in enumerate(records) if r.get("submission_id") == sub_id),
-            None,
+            (i + 2 for i, r in enumerate(records) if r.get("submission_id") == sub_id), None
         )
         if existing:
             ws.update(f"A{existing}:G{existing}", [row_values])
@@ -159,7 +158,7 @@ def save_note(notes_data, sub_id, note):
             json.dump(notes_data, f, indent=2)
 
 
-# ── CSV / Excel parsing ───────────────────────────────────────────────────────
+# ── Helpers ───────────────────────────────────────────────────────────────────
 
 def parse_name(raw):
     s = str(raw)
@@ -209,7 +208,61 @@ def is_test_entry(row):
     return False
 
 
-# ── PDF generation ────────────────────────────────────────────────────────────
+def has_notes(note):
+    return any(note.get(k) for k in ["meeting_notes", "followup_notes", "meeting_date", "followup_date"]) \
+           or note.get("status", "New") != "New"
+
+
+# ── Notes modal ───────────────────────────────────────────────────────────────
+
+@st.dialog("Internal Notes", width="large")
+def notes_dialog(sub_id, row, notes_data):
+    note  = notes_data.get(sub_id, {})
+    today = date.today()
+
+    name   = safe(row.get("Name", ""))
+    ticker = safe(row.get("Primary Company (Ticker)", ""))
+    st.markdown(f"**{name}** — {ticker}")
+    st.divider()
+
+    nc1, nc2 = st.columns(2)
+    with nc1:
+        cur_status   = note.get("status", "New")
+        status_val   = st.selectbox("Status", STATUS_OPTIONS,
+            index=STATUS_OPTIONS.index(cur_status) if cur_status in STATUS_OPTIONS else 0)
+        raw_mdate    = note.get("meeting_date", "")
+        mdate_def    = datetime.strptime(raw_mdate, "%Y-%m-%d").date() if raw_mdate else None
+        meeting_date = st.date_input("Meeting Date", value=mdate_def)
+
+    with nc2:
+        raw_fdate     = note.get("followup_date", "")
+        fdate_def     = datetime.strptime(raw_fdate, "%Y-%m-%d").date() if raw_fdate else None
+        followup_date = st.date_input("Follow-up Date", value=fdate_def)
+        quick = st.selectbox("Quick follow-up in...",
+            ["—", "3 days", "1 week", "2 weeks", "1 month", "3 months"])
+        if quick != "—":
+            days_map = {"3 days": 3, "1 week": 7, "2 weeks": 14, "1 month": 30, "3 months": 90}
+            followup_date = today + timedelta(days=days_map[quick])
+
+    meeting_notes  = st.text_area("Meeting Notes", value=note.get("meeting_notes", ""),
+        placeholder="How did it go? Key takeaways, impressions...", height=120)
+    followup_notes = st.text_area("Follow-up / Action Items", value=note.get("followup_notes", ""),
+        placeholder="Next steps, requests, action items...", height=90)
+
+    if st.button("💾 Save Notes", type="primary", use_container_width=True):
+        save_note(notes_data, sub_id, {
+            "status":         status_val,
+            "meeting_date":   meeting_date.strftime("%Y-%m-%d") if meeting_date else "",
+            "followup_date":  followup_date.strftime("%Y-%m-%d") if followup_date else "",
+            "meeting_notes":  meeting_notes,
+            "followup_notes": followup_notes,
+            "last_updated":   datetime.now().isoformat(),
+        })
+        st.success("Saved!")
+        st.rerun()
+
+
+# ── PDF ───────────────────────────────────────────────────────────────────────
 
 def generate_pdf(row, notes_data):
     buffer = BytesIO()
@@ -282,7 +335,7 @@ def generate_pdf(row, notes_data):
         story.append(Paragraph("Supporting Materials", H2))
         story.append(Paragraph("Document attached — accessible via original submission link.", BODY))
 
-    sub_id = make_id(row)
+    sub_id = row.get("submission_id", make_id(row))
     note   = notes_data.get(sub_id, {})
     if any(note.get(k) for k in ["status", "meeting_date", "meeting_notes", "followup_date", "followup_notes"]):
         story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#dee2e6"), spaceBefore=14, spaceAfter=10))
@@ -318,7 +371,77 @@ def generate_pdf(row, notes_data):
     return buffer
 
 
-# ── main app ──────────────────────────────────────────────────────────────────
+# ── Submission detail panel ───────────────────────────────────────────────────
+
+def render_detail(row, notes_data):
+    sub_id = row.get("submission_id", make_id(row))
+    note   = notes_data.get(sub_id, {})
+
+    name     = safe(row.get("Name", ""))
+    ticker   = safe(row.get("Primary Company (Ticker)", ""))
+    email    = safe(row.get("Email", ""))
+    phone    = safe(row.get("Phone", ""))
+    sector   = safe(row.get("Sector / Industry", ""))
+    mktcap   = safe(row.get("Market Capitalization", ""))
+    target   = safe(row.get("12-Month Target Price", ""))
+    sub_date = safe(row.get("Submission Date", ""))
+
+    # Header row with notes button
+    h1, h2 = st.columns([3, 1])
+    with h1:
+        st.markdown(f"## {ticker}  —  {name}")
+        st.caption(f"{email}  ·  {phone}  ·  Submitted {sub_date}")
+    with h2:
+        if has_notes(note):
+            status = note.get("status", "New")
+            icon   = STATUS_ICONS.get(status, "⚪")
+            st.markdown(f"**{icon} {status}**")
+            if note.get("meeting_date"):
+                st.caption(f"Met: {note['meeting_date']}")
+            if note.get("followup_date"):
+                st.caption(f"Follow-up: {note['followup_date']}")
+            if st.button("✏️ Edit Notes", key=f"edit_{sub_id}", use_container_width=True):
+                notes_dialog(sub_id, row, notes_data)
+        else:
+            if st.button("📝 Add Notes", key=f"add_{sub_id}", use_container_width=True, type="primary"):
+                notes_dialog(sub_id, row, notes_data)
+
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Market Cap", mktcap or "—")
+    c2.metric("12-Mo Target", f"${target}" if target and not target.startswith("$") else target or "—")
+    c3.metric("Sector", sector or "—")
+
+    st.divider()
+
+    bio = safe(row.get("Professional Bio", ""))
+    if bio:
+        with st.expander("Professional Bio"):
+            st.write(bio)
+
+    edge = safe(row.get("Your Edge", ""))
+    if edge:
+        st.markdown("**Investment Edge**")
+        st.info(edge)
+
+    summary = safe(row.get("Investment Summary", ""))
+    if summary:
+        st.markdown("**Investment Summary**")
+        st.markdown(summary)
+
+    doc_link = safe(row.get("Model or Supporting Materials Work", ""))
+    if doc_link:
+        st.markdown(f"📎 [Download Supporting Materials]({doc_link})")
+
+    st.divider()
+    pdf_buf = generate_pdf(row, notes_data)
+    st.download_button(
+        "📄 Export PDF", data=pdf_buf,
+        file_name=f"{ticker}_{name.replace(' ', '_')}.pdf",
+        mime="application/pdf", key=f"pdf_{sub_id}",
+    )
+
+
+# ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
     notes_data = load_notes()
@@ -335,11 +458,9 @@ def main():
         sector_filter = []
         status_filter = []
 
-    # Load submissions — from upload or saved sheet
     df = None
     if uploaded is not None:
         df = parse_upload(uploaded)
-        # add submission_id column for storage
         df["submission_id"] = df.apply(make_id, axis=1)
         save_submissions_to_sheet(df)
         st.sidebar.success("Submissions saved.")
@@ -350,11 +471,10 @@ def main():
         st.title("Specialist Insights Network")
         st.info(
             "No submissions loaded yet. Upload your first Strikingly export from the sidebar.\n\n"
-            "**Tip:** Always export *All Time* so previous weeks stay visible — submissions and notes are preserved automatically."
+            "**Tip:** Always export *All Time* so previous weeks stay visible."
         )
         return
 
-    # Ensure submission_id column exists
     if "submission_id" not in df.columns:
         df["submission_id"] = df.apply(make_id, axis=1)
 
@@ -364,7 +484,7 @@ def main():
             sector_filter = st.multiselect("Sector", options=sectors)
         status_filter = st.multiselect("Status", options=STATUS_OPTIONS)
 
-    # Filters
+    # Apply filters
     filtered = df.copy()
     if hide_test:
         filtered = filtered[~filtered.apply(is_test_entry, axis=1)]
@@ -398,159 +518,93 @@ def main():
                     alerts.append((safe(row.get("Name", "")), safe(row.get("Primary Company (Ticker)", "")), label, delta))
             except ValueError:
                 pass
-
     if alerts:
         with st.expander(f"⚠️ {len(alerts)} follow-up(s) due soon", expanded=True):
             for person, ticker, label, delta in alerts:
                 icon = "🔴" if delta < 0 else "🟠" if delta == 0 else "🟡"
                 st.markdown(f"{icon} **{person}** ({ticker}) — {label}")
 
-    st.markdown(f"### {len(filtered)} Submission{'s' if len(filtered) != 1 else ''}")
-
-    if filtered.empty:
-        st.warning("No submissions match the current filters.")
-        return
-
     if "selected_id" not in st.session_state:
         st.session_state.selected_id = None
 
-    col_list, col_detail = st.columns([1, 2], gap="large")
+    # ── Tabs ──
+    tab_all, tab_tracked = st.tabs([
+        f"📋 All Submissions ({len(filtered)})",
+        f"📌 Tracked ({sum(1 for _, r in filtered.iterrows() if has_notes(notes_data.get(r['submission_id'], {})))})",
+    ])
 
-    with col_list:
-        for _, row in filtered.iterrows():
-            sub_id = row["submission_id"]
-            note   = notes_data.get(sub_id, {})
-            status = note.get("status", "New")
-            icon   = STATUS_ICONS.get(status, "⚪")
-            name   = safe(row.get("Name", "Unknown"))
-            ticker = safe(row.get("Primary Company (Ticker)", "—"))
-            sector = safe(row.get("Sector / Industry", ""))
-            sdate  = safe(row.get("Submission Date", ""))
-            label  = f"{icon} **{name}**  ·  {ticker}\n{sector}  ·  {sdate}"
-            if st.button(label, key=f"btn_{sub_id}", use_container_width=True,
-                         type="primary" if st.session_state.selected_id == sub_id else "secondary"):
-                st.session_state.selected_id = sub_id
-                st.rerun()
+    # ── All Submissions tab ──
+    with tab_all:
+        if filtered.empty:
+            st.warning("No submissions match the current filters.")
+        else:
+            col_list, col_detail = st.columns([1, 2], gap="large")
+            with col_list:
+                for _, row in filtered.iterrows():
+                    sub_id = row["submission_id"]
+                    note   = notes_data.get(sub_id, {})
+                    status = note.get("status", "New")
+                    icon   = STATUS_ICONS.get(status, "⚪")
+                    name   = safe(row.get("Name", "Unknown"))
+                    ticker = safe(row.get("Primary Company (Ticker)", "—"))
+                    sector = safe(row.get("Sector / Industry", ""))
+                    sdate  = safe(row.get("Submission Date", ""))
+                    note_badge = "  ✅" if has_notes(note) else ""
+                    label  = f"{icon} **{name}**  ·  {ticker}{note_badge}\n{sector}  ·  {sdate}"
+                    if st.button(label, key=f"btn_{sub_id}", use_container_width=True,
+                                 type="primary" if st.session_state.selected_id == sub_id else "secondary"):
+                        st.session_state.selected_id = sub_id
+                        st.rerun()
 
-    with col_detail:
-        if st.session_state.selected_id is None:
-            st.info("← Select a submission to view details and add notes.")
-            return
+            with col_detail:
+                if st.session_state.selected_id is None:
+                    st.info("← Select a submission to view details.")
+                else:
+                    rows = filtered[filtered["submission_id"] == st.session_state.selected_id]
+                    if rows.empty:
+                        st.info("← Select a submission to view details.")
+                    else:
+                        render_detail(rows.iloc[0], notes_data)
 
-        rows = filtered[filtered["submission_id"] == st.session_state.selected_id]
-        if rows.empty:
-            st.info("← Select a submission to view details.")
-            return
+    # ── Tracked tab ──
+    with tab_tracked:
+        tracked = [
+            row for _, row in filtered.iterrows()
+            if has_notes(notes_data.get(row["submission_id"], {}))
+        ]
+        if not tracked:
+            st.info("No submissions with notes yet. Add notes to a submission and it will appear here.")
+        else:
+            if "tracked_selected" not in st.session_state:
+                st.session_state.tracked_selected = None
 
-        row    = rows.iloc[0]
-        sub_id = row["submission_id"]
-        note   = notes_data.get(sub_id, {})
+            col_list, col_detail = st.columns([1, 2], gap="large")
+            with col_list:
+                for row in tracked:
+                    sub_id = row["submission_id"]
+                    note   = notes_data.get(sub_id, {})
+                    status = note.get("status", "New")
+                    icon   = STATUS_ICONS.get(status, "⚪")
+                    name   = safe(row.get("Name", "Unknown"))
+                    ticker = safe(row.get("Primary Company (Ticker)", "—"))
+                    fu     = note.get("followup_date", "")
+                    fu_str = f"  ·  Follow-up: {fu}" if fu else ""
+                    label  = f"{icon} **{name}**  ·  {ticker}\n{status}{fu_str}"
+                    if st.button(label, key=f"tracked_{sub_id}", use_container_width=True,
+                                 type="primary" if st.session_state.tracked_selected == sub_id else "secondary"):
+                        st.session_state.tracked_selected = sub_id
+                        st.rerun()
 
-        name     = safe(row.get("Name", ""))
-        ticker   = safe(row.get("Primary Company (Ticker)", ""))
-        email    = safe(row.get("Email", ""))
-        phone    = safe(row.get("Phone", ""))
-        sector   = safe(row.get("Sector / Industry", ""))
-        mktcap   = safe(row.get("Market Capitalization", ""))
-        target   = safe(row.get("12-Month Target Price", ""))
-        sub_date = safe(row.get("Submission Date", ""))
-
-        st.markdown(f"## {ticker}  —  {name}")
-        st.caption(f"{email}  ·  {phone}  ·  Submitted {sub_date}")
-
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Market Cap", mktcap or "—")
-        c2.metric("12-Mo Target", f"${target}" if target and not target.startswith("$") else target or "—")
-        c3.metric("Sector", sector or "—")
-
-        st.divider()
-
-        bio = safe(row.get("Professional Bio", ""))
-        if bio:
-            with st.expander("Professional Bio"):
-                st.write(bio)
-
-        edge = safe(row.get("Your Edge", ""))
-        if edge:
-            st.markdown("**Investment Edge**")
-            st.info(edge)
-
-        summary = safe(row.get("Investment Summary", ""))
-        if summary:
-            st.markdown("**Investment Summary**")
-            st.markdown(summary)
-
-        doc_link = safe(row.get("Model or Supporting Materials Work", ""))
-        if doc_link:
-            st.markdown(f"📎 [Download Supporting Materials]({doc_link})")
-
-        st.divider()
-        st.markdown("### 📝 Internal Notes")
-
-        # Show existing notes as read-only summary if they exist
-        if any(note.get(k) for k in ["meeting_notes", "followup_notes", "status"]):
-            with st.expander("Previously saved notes", expanded=True):
-                if note.get("status") and note["status"] != "New":
-                    st.markdown(f"**Status:** {STATUS_ICONS.get(note['status'], '')} {note['status']}")
-                if note.get("meeting_date"):
-                    st.markdown(f"**Meeting Date:** {note['meeting_date']}")
-                if note.get("meeting_notes"):
-                    st.markdown(f"**Meeting Notes:** {note['meeting_notes']}")
-                if note.get("followup_date"):
-                    st.markdown(f"**Follow-up Date:** {note['followup_date']}")
-                if note.get("followup_notes"):
-                    st.markdown(f"**Follow-up Notes:** {note['followup_notes']}")
-
-        nc1, nc2 = st.columns(2)
-        with nc1:
-            cur_status   = note.get("status", "New")
-            status_val   = st.selectbox("Status", STATUS_OPTIONS,
-                index=STATUS_OPTIONS.index(cur_status) if cur_status in STATUS_OPTIONS else 0,
-                key=f"status_{sub_id}")
-            raw_mdate    = note.get("meeting_date", "")
-            mdate_def    = datetime.strptime(raw_mdate, "%Y-%m-%d").date() if raw_mdate else None
-            meeting_date = st.date_input("Meeting Date", value=mdate_def, key=f"mdate_{sub_id}")
-
-        with nc2:
-            raw_fdate     = note.get("followup_date", "")
-            fdate_def     = datetime.strptime(raw_fdate, "%Y-%m-%d").date() if raw_fdate else None
-            followup_date = st.date_input("Follow-up Date", value=fdate_def, key=f"fdate_{sub_id}")
-            quick = st.selectbox("Quick follow-up in...",
-                ["—", "3 days", "1 week", "2 weeks", "1 month", "3 months"],
-                key=f"quick_{sub_id}")
-            if quick != "—":
-                days_map = {"3 days": 3, "1 week": 7, "2 weeks": 14, "1 month": 30, "3 months": 90}
-                followup_date = today + timedelta(days=days_map[quick])
-
-        meeting_notes = st.text_area("Meeting Notes", value=note.get("meeting_notes", ""),
-            placeholder="How did it go? Key takeaways, impressions...",
-            height=110, key=f"mnotes_{sub_id}")
-        followup_notes = st.text_area("Follow-up / Action Items", value=note.get("followup_notes", ""),
-            placeholder="Next steps, requests, action items...",
-            height=80, key=f"fnotes_{sub_id}")
-
-        btn1, btn2 = st.columns(2)
-        with btn1:
-            if st.button("💾 Save Notes", key=f"save_{sub_id}", use_container_width=True, type="primary"):
-                save_note(notes_data, sub_id, {
-                    "status":         status_val,
-                    "meeting_date":   meeting_date.strftime("%Y-%m-%d") if meeting_date else "",
-                    "followup_date":  followup_date.strftime("%Y-%m-%d") if followup_date else "",
-                    "meeting_notes":  meeting_notes,
-                    "followup_notes": followup_notes,
-                    "last_updated":   datetime.now().isoformat(),
-                })
-                st.success("Notes saved!")
-                st.rerun()
-
-        with btn2:
-            pdf_buf = generate_pdf(row, notes_data)
-            st.download_button(
-                "📄 Export PDF", data=pdf_buf,
-                file_name=f"{ticker}_{name.replace(' ', '_')}.pdf",
-                mime="application/pdf", key=f"pdf_{sub_id}",
-                use_container_width=True,
-            )
+            with col_detail:
+                sel = st.session_state.tracked_selected
+                if sel is None:
+                    st.info("← Select a tracked submission to view details.")
+                else:
+                    match = [r for r in tracked if r["submission_id"] == sel]
+                    if match:
+                        render_detail(match[0], notes_data)
+                    else:
+                        st.info("← Select a tracked submission to view details.")
 
 
 if __name__ == "__main__":
