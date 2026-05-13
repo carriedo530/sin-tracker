@@ -501,7 +501,7 @@ def generate_pdf(row, notes_data):
     target   = safe(row.get("12-Month Target Price", ""))
     sub_date = safe(row.get("Submission Date", ""))
 
-    story.append(Paragraph(f"{rl_escape(ticker)} — Analyst Submission", H1))
+    story.append(Paragraph(f"{rl_escape(ticker)} — {rl_escape(name)}", H1))
     story.append(Paragraph(
         f"{rl_escape(name)}&nbsp;&nbsp;|&nbsp;&nbsp;{rl_escape(email)}&nbsp;&nbsp;|&nbsp;&nbsp;{rl_escape(phone)}", SUB
     ))
