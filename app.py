@@ -138,7 +138,7 @@ st.markdown("""
   section[data-testid="stSidebar"] [data-testid="stFileUploader"] * { color: rgba(255,255,255,0.85) !important; }
 
   /* ── Main layout ── */
-  .block-container { padding-top: 1.6rem !important; }
+  .block-container { padding-top: 1.6rem !important; min-width: 700px !important; }
 
   /* ── Submission list buttons ── */
   .stButton > button {
@@ -681,7 +681,8 @@ def main():
 
     with st.sidebar:
         st.markdown(
-            f"<div style='margin:-4rem -1.2rem 0 -1.2rem;height:160px;overflow:hidden;display:flex;align-items:center;'>"
+            f"<div style='margin:-4rem -1.2rem 0 -1.2rem;height:160px;overflow:hidden;"
+            f"display:flex;align-items:center;pointer-events:none;'>"
             f"<img src='{LOGO_URL}' style='width:100%;display:block;mix-blend-mode:screen;"
             f"transform:scale(1.6);transform-origin:center center;'></div>",
             unsafe_allow_html=True,
