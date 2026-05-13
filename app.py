@@ -85,15 +85,21 @@ st.markdown("""
   section[data-testid="stSidebar"] span { color: rgba(255,255,255,0.82) !important; }
   section[data-testid="stSidebar"] hr { border-color: rgba(255,255,255,0.15) !important; }
 
-  /* Sidebar inputs */
-  section[data-testid="stSidebar"] input {
+  /* Sidebar search input only */
+  section[data-testid="stSidebar"] [data-testid="stTextInput"] input {
       background: #ffffff !important;
       border-color: rgba(255,255,255,0.3) !important;
       color: #1a2744 !important;
       caret-color: #1a2744 !important;
       -webkit-text-fill-color: #1a2744 !important;
   }
-  section[data-testid="stSidebar"] input::placeholder { color: #8896a5 !important; }
+  section[data-testid="stSidebar"] [data-testid="stTextInput"] input::placeholder { color: #8896a5 !important; }
+  /* Multiselect inputs — keep transparent/white text */
+  section[data-testid="stSidebar"] [data-baseweb="select"] input {
+      background: transparent !important;
+      color: rgba(255,255,255,0.85) !important;
+      -webkit-text-fill-color: rgba(255,255,255,0.85) !important;
+  }
   /* Multiselect / select boxes */
   section[data-testid="stSidebar"] [data-baseweb="select"] > div,
   section[data-testid="stSidebar"] [data-baseweb="select"] > div > div {
