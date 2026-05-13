@@ -801,7 +801,7 @@ def main():
                 sector = safe(row.get("Sector / Industry", ""))
                 sdate  = safe(row.get("Submission Date", ""))
                 badge  = "  📝" if has_notes(note) else ""
-                label  = f"{icon} **{name}**  ·  {ticker}{badge}\n{sector}  ·  {sdate}"
+                label  = f"{icon}**{ticker}**  ·  {name}{badge}"
                 if st.button(label, key=f"btn_{sub_id}", use_container_width=True,
                              type="primary" if st.session_state.get(selected_key) == sub_id else "secondary"):
                     st.session_state[selected_key] = sub_id
@@ -820,8 +820,7 @@ def main():
                 name   = safe(row.get("Name", "Unknown"))
                 ticker = safe(row.get("Primary Company (Ticker)", "—"))
                 fu     = note.get("followup_date", "")
-                fu_str = f"\nFollow-up: {fu}" if fu else f"\n{status}"
-                label  = f"{icon} **{name}**  ·  {ticker}{fu_str}"
+                label  = f"{icon}**{ticker}**  ·  {name}"
                 if st.button(label, key=f"tracked_{sub_id}", use_container_width=True,
                              type="primary" if st.session_state.get(selected_key) == sub_id else "secondary"):
                     st.session_state[selected_key] = sub_id
@@ -840,7 +839,7 @@ def main():
                 name   = safe(row.get("Name", "Unknown"))
                 ticker = safe(row.get("Primary Company (Ticker)", "—"))
                 sector = safe(row.get("Sector / Industry", ""))
-                label  = f"⭐ **{name}**  ·  {ticker}\n{icon} {status}  ·  {sector}"
+                label  = f"⭐ **{ticker}**  ·  {name}"
                 if st.button(label, key=f"fav_{sub_id}", use_container_width=True,
                              type="primary" if st.session_state.get(selected_key) == sub_id else "secondary"):
                     st.session_state[selected_key] = sub_id
