@@ -143,7 +143,7 @@ st.markdown("""
   section[data-testid="stSidebar"] [data-testid="stFileUploader"] * { color: rgba(255,255,255,0.85) !important; }
 
   /* ── Main layout ── */
-  .block-container { padding-top: 1.6rem !important; padding-left: 1.5rem !important; padding-right: 1.5rem !important; min-width: 700px !important; }
+  .block-container { padding-top: 0.5rem !important; padding-left: 1.5rem !important; padding-right: 1.5rem !important; min-width: 700px !important; }
 
   /* ── Submission list buttons ── */
   .stButton > button {
@@ -790,13 +790,12 @@ def main():
         st.session_state.selected_id = None
 
     # ── Header ──
-    tracked_count = sum(1 for _, r in filtered.iterrows() if has_notes(notes_data.get(r["submission_id"], {})))
     st.markdown(
         "<h2 style='color:#1a2744;font-family:Georgia,serif;margin-top:0;margin-bottom:0.3rem;'>"
         "Specialist Insights Network</h2>",
         unsafe_allow_html=True,
     )
-    st.caption(f"{len(filtered)} submission{'s' if len(filtered) != 1 else ''}  ·  {tracked_count} tracked")
+    st.caption(f"{len(filtered)} submission{'s' if len(filtered) != 1 else ''}")
     st.divider()
 
     col_list, col_detail = st.columns([1, 3], gap="large")
