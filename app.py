@@ -165,6 +165,7 @@ st.markdown("""
   [data-testid="baseButton-primary"] {
       background: #1a2744 !important; color: #ffffff !important;
       border-color: #1a2744 !important; border-left: 4px solid #c9a040 !important;
+      text-align: left !important;
   }
   .stButton > button[kind="primary"]:hover,
   [data-testid="baseButton-primary"]:hover { background: #243860 !important; border-color: #243860 !important; border-left-color: #c9a040 !important; }
