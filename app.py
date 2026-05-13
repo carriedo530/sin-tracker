@@ -70,21 +70,23 @@ st.markdown("""
   section[data-testid="stSidebar"] > div {
       background: linear-gradient(175deg, #0b1220 0%, #1a2744 100%) !important;
   }
-  /* Logo — bleed edge-to-edge, zoom into the actual logo graphic */
+  /* Logo — full-width, contained zoom so wave stays fully visible */
   section[data-testid="stSidebar"] [data-testid="stImage"] {
       margin-left: -1.2rem !important;
       margin-right: -1.2rem !important;
-      margin-top: -1rem !important;
+      margin-top: -4rem !important;
       width: calc(100% + 2.4rem) !important;
-      height: 140px !important;
+      height: 160px !important;
       overflow: hidden !important;
+      display: flex !important;
+      align-items: center !important;
   }
   section[data-testid="stSidebar"] img {
       mix-blend-mode: screen !important;
       display: block !important;
       width: 100% !important;
       border-radius: 0 !important;
-      transform: scale(2.1) !important;
+      transform: scale(1.6) !important;
       transform-origin: center center !important;
   }
 
