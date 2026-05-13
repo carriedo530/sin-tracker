@@ -47,39 +47,40 @@ st.set_page_config(
 )
 st.markdown("""
 <style>
-  /* ── Sidebar ── */
-  [data-testid="stSidebar"] {
+  /* ── Sidebar background ── */
+  section[data-testid="stSidebar"],
+  section[data-testid="stSidebar"] > div:first-child {
       background: linear-gradient(175deg, #0b1220 0%, #1a2744 100%) !important;
   }
-  [data-testid="stSidebar"] .stMarkdown p,
-  [data-testid="stSidebar"] .stMarkdown,
-  [data-testid="stSidebar"] label,
-  [data-testid="stSidebar"] span,
-  [data-testid="stSidebar"] .stCheckbox span {
-      color: rgba(255,255,255,0.85) !important;
+  /* Sidebar text */
+  section[data-testid="stSidebar"] p,
+  section[data-testid="stSidebar"] label,
+  section[data-testid="stSidebar"] .stMarkdown,
+  section[data-testid="stSidebar"] span:not([data-baseweb]),
+  section[data-testid="stSidebar"] small {
+      color: rgba(255,255,255,0.82) !important;
   }
-  [data-testid="stSidebar"] .stTextInput input,
-  [data-testid="stSidebar"] .stMultiSelect [data-baseweb="select"] {
-      background: rgba(255,255,255,0.08) !important;
+  section[data-testid="stSidebar"] hr {
       border-color: rgba(255,255,255,0.15) !important;
+  }
+  section[data-testid="stSidebar"] input,
+  section[data-testid="stSidebar"] [data-baseweb="select"] > div {
+      background: rgba(255,255,255,0.09) !important;
+      border-color: rgba(255,255,255,0.18) !important;
       color: white !important;
   }
-  [data-testid="stSidebar"] hr { border-color: rgba(255,255,255,0.12) !important; }
-  [data-testid="stSidebar"] .stFileUploader {
-      background: rgba(255,255,255,0.06) !important;
-      border: 1px dashed rgba(255,255,255,0.25) !important;
-      border-radius: 8px !important;
+  /* Radio nav buttons */
+  section[data-testid="stSidebar"] [data-testid="stRadio"] label {
+      color: rgba(255,255,255,0.82) !important;
   }
-  [data-testid="stSidebar"] .stSuccess {
-      background: rgba(40,167,69,0.2) !important;
-      color: #90ee90 !important;
+  section[data-testid="stSidebar"] [data-testid="stRadio"] [data-baseweb="radio"] div {
+      border-color: rgba(255,255,255,0.4) !important;
   }
 
   /* ── Main layout ── */
-  .block-container { padding-top: 1.8rem; max-width: 1400px; }
+  .block-container { padding-top: 1.6rem !important; }
 
   /* ── Submission list buttons ── */
-  [data-testid="stSidebar"] .stButton > button,
   .stButton > button {
       text-align: left !important;
       border-radius: 6px !important;
@@ -88,13 +89,11 @@ st.markdown("""
       background: #ffffff !important;
       color: #1a2744 !important;
       font-size: 0.88rem !important;
-      transition: border-color 0.15s, background 0.15s !important;
   }
   .stButton > button:hover {
       border-color: #c9a040 !important;
       background: #fdf8ee !important;
   }
-  /* Active / selected */
   [data-testid="baseButton-primary"] {
       background: #1a2744 !important;
       color: #ffffff !important;
@@ -103,21 +102,6 @@ st.markdown("""
   [data-testid="baseButton-primary"]:hover {
       background: #243860 !important;
       border-color: #243860 !important;
-  }
-
-  /* ── Tabs ── */
-  .stTabs [data-baseweb="tab-list"] { gap: 4px; border-bottom: 2px solid #e2e6ea; }
-  .stTabs [data-baseweb="tab"] {
-      background: transparent !important;
-      color: #6c757d !important;
-      font-weight: 500;
-      padding: 8px 18px;
-      border-radius: 6px 6px 0 0;
-  }
-  .stTabs [aria-selected="true"] {
-      color: #1a2744 !important;
-      border-bottom: 3px solid #c9a040 !important;
-      font-weight: 600 !important;
   }
 
   /* ── Metrics ── */
@@ -130,7 +114,7 @@ st.markdown("""
   div[data-testid="stMetricValue"] { font-size: 1rem; font-weight: 600; color: #1a2744; }
   div[data-testid="stMetricLabel"] { font-size: 0.75rem; color: #6c757d; }
 
-  /* ── Info / alert boxes ── */
+  /* ── Info / expander boxes ── */
   .stAlert { border-radius: 8px !important; }
   [data-testid="stExpander"] { border: 1px solid #e2e6ea !important; border-radius: 8px !important; }
 
@@ -142,15 +126,10 @@ st.markdown("""
       border-radius: 6px !important;
       font-weight: 500 !important;
   }
-  [data-testid="stDownloadButton"] button:hover {
-      background: #fdf8ee !important;
-  }
 
   /* ── Dividers ── */
   hr { border-color: #e2e6ea !important; margin: 1.2rem 0 !important; }
-
-  /* ── Caption / muted text ── */
-  .stCaption, [data-testid="stCaptionContainer"] { color: #8896a5 !important; font-size: 0.82rem !important; }
+  .stCaption { color: #8896a5 !important; font-size: 0.82rem !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -552,14 +531,16 @@ def main():
     with st.sidebar:
         st.image(LOGO_URL, use_container_width=True)
         st.markdown(
-            "<p style='color:rgba(255,255,255,0.5);font-size:0.72rem;letter-spacing:0.12em;"
-            "text-transform:uppercase;margin:-8px 0 4px 2px;'>Specialist Insights Network</p>",
+            "<p style='color:rgba(255,255,255,0.45);font-size:0.7rem;letter-spacing:0.14em;"
+            "text-transform:uppercase;margin:2px 0 0 2px;'>Specialist Insights Network</p>",
             unsafe_allow_html=True,
         )
         st.divider()
         uploaded = st.file_uploader("Upload new export (.csv or .xlsx)", type=["csv", "xlsx", "xls"])
         st.divider()
-        st.markdown("### Filters")
+        view = st.radio("View", ["📋  All Submissions", "📌  Tracked"], label_visibility="collapsed")
+        st.divider()
+        st.markdown("<p style='font-size:0.78rem;opacity:0.6;margin-bottom:4px;'>FILTERS</p>", unsafe_allow_html=True)
         search        = st.text_input("🔍 Search name, ticker, email")
         hide_test     = st.checkbox("Hide test entries", value=True)
         sector_filter = []
@@ -639,91 +620,84 @@ def main():
     if "selected_id" not in st.session_state:
         st.session_state.selected_id = None
 
+    # ── Header ──
+    tracked_count = sum(1 for _, r in filtered.iterrows() if has_notes(notes_data.get(r["submission_id"], {})))
     st.markdown(
-        "<p style='color:#8896a5;font-size:0.8rem;letter-spacing:0.1em;text-transform:uppercase;"
-        "margin-bottom:0.2rem;'>First Wave Capital</p>"
-        "<h2 style='color:#1a2744;font-family:Georgia,serif;margin-top:0;'>Specialist Insights Network</h2>",
+        "<p style='color:#8896a5;font-size:0.75rem;letter-spacing:0.12em;text-transform:uppercase;"
+        "margin-bottom:2px;'>First Wave Capital</p>"
+        "<h2 style='color:#1a2744;font-family:Georgia,serif;margin-top:0;margin-bottom:0.3rem;'>"
+        "Specialist Insights Network</h2>",
         unsafe_allow_html=True,
     )
+    st.caption(f"{len(filtered)} submission{'s' if len(filtered) != 1 else ''}  ·  {tracked_count} tracked")
+    st.divider()
 
-    # ── Tabs ──
-    tab_all, tab_tracked = st.tabs([
-        f"📋 All Submissions ({len(filtered)})",
-        f"📌 Tracked ({sum(1 for _, r in filtered.iterrows() if has_notes(notes_data.get(r['submission_id'], {})))})",
-    ])
+    col_list, col_detail = st.columns([1, 2], gap="large")
 
-    # ── All Submissions tab ──
-    with tab_all:
-        if filtered.empty:
-            st.warning("No submissions match the current filters.")
+    # ── Submission list (left column) ──
+    with col_list:
+        if "📋" in view:
+            rows_to_show = list(filtered.iterrows())
+            selected_key = "selected_id"
+            if not rows_to_show:
+                st.warning("No submissions match the current filters.")
+            for _, row in rows_to_show:
+                sub_id = row["submission_id"]
+                note   = notes_data.get(sub_id, {})
+                status = note.get("status", "New")
+                icon   = STATUS_ICONS.get(status, "⚪")
+                name   = safe(row.get("Name", "Unknown"))
+                ticker = safe(row.get("Primary Company (Ticker)", "—"))
+                sector = safe(row.get("Sector / Industry", ""))
+                sdate  = safe(row.get("Submission Date", ""))
+                badge  = "  ✅" if has_notes(note) else ""
+                label  = f"{icon} **{name}**  ·  {ticker}{badge}\n{sector}  ·  {sdate}"
+                if st.button(label, key=f"btn_{sub_id}", use_container_width=True,
+                             type="primary" if st.session_state.get(selected_key) == sub_id else "secondary"):
+                    st.session_state[selected_key] = sub_id
+                    st.rerun()
         else:
-            col_list, col_detail = st.columns([1, 2], gap="large")
-            with col_list:
-                for _, row in filtered.iterrows():
-                    sub_id = row["submission_id"]
-                    note   = notes_data.get(sub_id, {})
-                    status = note.get("status", "New")
-                    icon   = STATUS_ICONS.get(status, "⚪")
-                    name   = safe(row.get("Name", "Unknown"))
-                    ticker = safe(row.get("Primary Company (Ticker)", "—"))
-                    sector = safe(row.get("Sector / Industry", ""))
-                    sdate  = safe(row.get("Submission Date", ""))
-                    note_badge = "  ✅" if has_notes(note) else ""
-                    label  = f"{icon} **{name}**  ·  {ticker}{note_badge}\n{sector}  ·  {sdate}"
-                    if st.button(label, key=f"btn_{sub_id}", use_container_width=True,
-                                 type="primary" if st.session_state.selected_id == sub_id else "secondary"):
-                        st.session_state.selected_id = sub_id
-                        st.rerun()
+            selected_key = "tracked_selected"
+            tracked_rows = [row for _, row in filtered.iterrows()
+                            if has_notes(notes_data.get(row["submission_id"], {}))]
+            if not tracked_rows:
+                st.info("No submissions with notes yet.")
+            for row in tracked_rows:
+                sub_id = row["submission_id"]
+                note   = notes_data.get(sub_id, {})
+                status = note.get("status", "New")
+                icon   = STATUS_ICONS.get(status, "⚪")
+                name   = safe(row.get("Name", "Unknown"))
+                ticker = safe(row.get("Primary Company (Ticker)", "—"))
+                fu     = note.get("followup_date", "")
+                fu_str = f"\nFollow-up: {fu}" if fu else f"\n{status}"
+                label  = f"{icon} **{name}**  ·  {ticker}{fu_str}"
+                if st.button(label, key=f"tracked_{sub_id}", use_container_width=True,
+                             type="primary" if st.session_state.get(selected_key) == sub_id else "secondary"):
+                    st.session_state[selected_key] = sub_id
+                    st.rerun()
 
-            with col_detail:
-                if st.session_state.selected_id is None:
-                    st.info("← Select a submission to view details.")
-                else:
-                    rows = filtered[filtered["submission_id"] == st.session_state.selected_id]
-                    if rows.empty:
-                        st.info("← Select a submission to view details.")
-                    else:
-                        render_detail(rows.iloc[0], notes_data)
-
-    # ── Tracked tab ──
-    with tab_tracked:
-        tracked = [
-            row for _, row in filtered.iterrows()
-            if has_notes(notes_data.get(row["submission_id"], {}))
-        ]
-        if not tracked:
-            st.info("No submissions with notes yet. Add notes to a submission and it will appear here.")
+    # ── Detail panel (right column) ──
+    with col_detail:
+        sel_id = st.session_state.get(selected_key)
+        if sel_id is None:
+            st.markdown(
+                "<div style='margin-top:3rem;text-align:center;color:#8896a5;'>"
+                "<p style='font-size:2rem;'>←</p>"
+                "<p>Select a submission to view details</p></div>",
+                unsafe_allow_html=True,
+            )
         else:
-            if "tracked_selected" not in st.session_state:
-                st.session_state.tracked_selected = None
-
-            col_list, col_detail = st.columns([1, 2], gap="large")
-            with col_list:
-                for row in tracked:
-                    sub_id = row["submission_id"]
-                    note   = notes_data.get(sub_id, {})
-                    status = note.get("status", "New")
-                    icon   = STATUS_ICONS.get(status, "⚪")
-                    name   = safe(row.get("Name", "Unknown"))
-                    ticker = safe(row.get("Primary Company (Ticker)", "—"))
-                    fu     = note.get("followup_date", "")
-                    fu_str = f"  ·  Follow-up: {fu}" if fu else ""
-                    label  = f"{icon} **{name}**  ·  {ticker}\n{status}{fu_str}"
-                    if st.button(label, key=f"tracked_{sub_id}", use_container_width=True,
-                                 type="primary" if st.session_state.tracked_selected == sub_id else "secondary"):
-                        st.session_state.tracked_selected = sub_id
-                        st.rerun()
-
-            with col_detail:
-                sel = st.session_state.tracked_selected
-                if sel is None:
-                    st.info("← Select a tracked submission to view details.")
-                else:
-                    match = [r for r in tracked if r["submission_id"] == sel]
-                    if match:
-                        render_detail(match[0], notes_data)
-                    else:
-                        st.info("← Select a tracked submission to view details.")
+            if "📋" in view:
+                match = filtered[filtered["submission_id"] == sel_id]
+                row = match.iloc[0] if not match.empty else None
+            else:
+                match = [r for r in tracked_rows if r["submission_id"] == sel_id]
+                row = match[0] if match else None
+            if row is not None:
+                render_detail(row, notes_data)
+            else:
+                st.info("Select a submission to view details.")
 
 
 if __name__ == "__main__":
