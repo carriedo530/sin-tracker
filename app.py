@@ -143,7 +143,7 @@ st.markdown("""
   section[data-testid="stSidebar"] [data-testid="stFileUploader"] * { color: rgba(255,255,255,0.85) !important; }
 
   /* ── Main layout ── */
-  .block-container { padding-top: 1.6rem !important; min-width: 700px !important; }
+  .block-container { padding-top: 1.6rem !important; padding-left: 1.5rem !important; padding-right: 1.5rem !important; min-width: 700px !important; }
 
   /* ── Submission list buttons ── */
   .stButton > button {
