@@ -146,10 +146,10 @@ st.markdown("""
   .block-container { padding-top: 1.6rem !important; padding-left: 1.5rem !important; padding-right: 1.5rem !important; min-width: 700px !important; }
 
   /* ── Submission list buttons ── */
-  .stButton > button, .stButton > button p, .stButton > button div {
-      text-align: left !important;
-  }
   .stButton > button {
+      display: flex !important;
+      justify-content: flex-start !important;
+      align-items: center !important;
       text-align: left !important;
       border-radius: 6px !important;
       border: 1px solid #e2e6ea !important;
@@ -161,6 +161,10 @@ st.markdown("""
       white-space: nowrap !important;
       overflow: hidden !important;
       text-overflow: ellipsis !important;
+  }
+  .stButton > button p, .stButton > button div, .stButton > button span {
+      text-align: left !important;
+      justify-content: flex-start !important;
   }
   .stButton > button:hover { border-color: #c9a040 !important; background: #fdf8ee !important; }
   .stButton > button[kind="primaryFormSubmit"],
