@@ -68,15 +68,7 @@ st.markdown("""
   section[data-testid="stSidebar"] > div {
       background: linear-gradient(175deg, #0b1220 0%, #1a2744 100%) !important;
   }
-  /* Sidebar collapse toggle — push below logo */
-  [data-testid="collapsedControl"],
-  button[kind="header"] { margin-top: 180px !important; }
-
-  /* Logo — blend black background into dark sidebar */
-  section[data-testid="stSidebar"] img {
-      mix-blend-mode: screen !important;
-      border-radius: 4px;
-  }
+  /* Logo in HTML — blend handled inline */
 
   /* Sidebar text */
   section[data-testid="stSidebar"] p,
@@ -90,10 +82,13 @@ st.markdown("""
 
   /* Sidebar inputs */
   section[data-testid="stSidebar"] input {
-      background: rgba(255,255,255,0.09) !important;
-      border-color: rgba(255,255,255,0.2) !important;
-      color: white !important;
+      background: rgba(255,255,255,0.12) !important;
+      border-color: rgba(255,255,255,0.3) !important;
+      color: #ffffff !important;
+      caret-color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
   }
+  section[data-testid="stSidebar"] input::placeholder { color: rgba(255,255,255,0.45) !important; }
   /* Multiselect / select boxes */
   section[data-testid="stSidebar"] [data-baseweb="select"] > div,
   section[data-testid="stSidebar"] [data-baseweb="select"] > div > div {
@@ -601,10 +596,16 @@ def main():
     notes_data = load_notes()
 
     with st.sidebar:
-        st.image(LOGO_URL, use_container_width=True)
         st.markdown(
-            "<p style='color:rgba(255,255,255,0.45);font-size:0.7rem;letter-spacing:0.14em;"
-            "text-transform:uppercase;margin:2px 0 6px 2px;'>Specialist Insights Network</p>",
+            f"<div style='display:flex;align-items:center;gap:10px;margin-bottom:6px;'>"
+            f"<img src='{LOGO_URL}' style='width:64px;height:64px;object-fit:cover;"
+            f"border-radius:6px;mix-blend-mode:screen;flex-shrink:0;'>"
+            f"<div style='min-width:0;'>"
+            f"<p style='color:#ffffff;font-size:1.05rem;font-weight:700;margin:0;line-height:1.2;"
+            f"font-family:Georgia,serif;'>First Wave Capital</p>"
+            f"<p style='color:rgba(255,255,255,0.45);font-size:0.65rem;letter-spacing:0.12em;"
+            f"text-transform:uppercase;margin:3px 0 0 0;'>Specialist Insights Network</p>"
+            f"</div></div>",
             unsafe_allow_html=True,
         )
         search = st.text_input("Search", placeholder="🔍 Search name, ticker, email", label_visibility="collapsed")
