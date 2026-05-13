@@ -206,15 +206,22 @@ def get_worksheet(tab_name, headers):
     ss = get_spreadsheet()
     if ss is None:
         return None
+    cache_key = f"_ws_{tab_name}"
+    if cache_key in st.session_state:
+        return st.session_state[cache_key]
     try:
         ws = ss.worksheet(tab_name)
-        existing_headers = ws.row_values(1)
-        for i, h in enumerate(headers):
-            if i >= len(existing_headers) or existing_headers[i] != h:
-                ws.update_cell(1, i + 1, h)
+        try:
+            existing = ws.row_values(1)
+            if len(existing) < len(headers):
+                for i in range(len(existing), len(headers)):
+                    ws.update_cell(1, i + 1, headers[i])
+        except Exception:
+            pass
     except gspread.WorksheetNotFound:
         ws = ss.add_worksheet(tab_name, rows=2000, cols=len(headers))
         ws.append_row(headers)
+    st.session_state[cache_key] = ws
     return ws
 
 
