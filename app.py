@@ -154,6 +154,9 @@ st.markdown("""
       background: #ffffff !important;
       color: #1a2744 !important;
       font-size: 0.88rem !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
   }
   .stButton > button:hover { border-color: #c9a040 !important; background: #fdf8ee !important; }
   .stButton > button[kind="primaryFormSubmit"],
