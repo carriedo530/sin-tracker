@@ -503,7 +503,7 @@ def generate_pdf(row, notes_data):
 
     story.append(Paragraph(f"{rl_escape(ticker)} — {rl_escape(name)}", H1))
     story.append(Paragraph(
-        f"{rl_escape(name)}&nbsp;&nbsp;|&nbsp;&nbsp;{rl_escape(email)}&nbsp;&nbsp;|&nbsp;&nbsp;{rl_escape(phone)}", SUB
+        f"{rl_escape(email)}&nbsp;&nbsp;|&nbsp;&nbsp;{rl_escape(phone)}", SUB
     ))
     story.append(HRFlowable(width="100%", thickness=2, color=NAVY, spaceAfter=10))
 
