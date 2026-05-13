@@ -593,7 +593,7 @@ def main():
         st.divider()
         uploaded = st.file_uploader("Upload new export (.csv or .xlsx)", type=["csv", "xlsx", "xls"])
         st.divider()
-        view = st.radio("View", ["📋  All Submissions", "📝  Notes"], label_visibility="collapsed")
+        view = st.radio("View", ["📋  All Submissions", "📝  Notes", "⭐  Favorites"], label_visibility="collapsed")
         st.divider()
         st.markdown("<p style='font-size:0.78rem;opacity:0.6;margin-bottom:4px;'>FILTERS</p>", unsafe_allow_html=True)
         search        = st.text_input("🔍 Search name, ticker, email")
@@ -711,7 +711,7 @@ def main():
                              type="primary" if st.session_state.get(selected_key) == sub_id else "secondary"):
                     st.session_state[selected_key] = sub_id
                     st.rerun()
-        else:
+        elif "📝" in view:
             selected_key = "tracked_selected"
             tracked_rows = [row for _, row in filtered.iterrows()
                             if has_notes(notes_data.get(row["submission_id"], {}))]
@@ -731,6 +731,25 @@ def main():
                              type="primary" if st.session_state.get(selected_key) == sub_id else "secondary"):
                     st.session_state[selected_key] = sub_id
                     st.rerun()
+        else:
+            selected_key = "fav_selected"
+            fav_rows = [row for _, row in filtered.iterrows()
+                        if notes_data.get(row["submission_id"], {}).get("starred")]
+            if not fav_rows:
+                st.info("No starred submissions yet. Click ☆ on any submission to add it here.")
+            for row in fav_rows:
+                sub_id = row["submission_id"]
+                note   = notes_data.get(sub_id, {})
+                status = note.get("status", "New")
+                icon   = STATUS_ICONS.get(status, "⚪")
+                name   = safe(row.get("Name", "Unknown"))
+                ticker = safe(row.get("Primary Company (Ticker)", "—"))
+                sector = safe(row.get("Sector / Industry", ""))
+                label  = f"⭐ **{name}**  ·  {ticker}\n{icon} {status}  ·  {sector}"
+                if st.button(label, key=f"fav_{sub_id}", use_container_width=True,
+                             type="primary" if st.session_state.get(selected_key) == sub_id else "secondary"):
+                    st.session_state[selected_key] = sub_id
+                    st.rerun()
 
     # ── Detail panel (right column) ──
     with col_detail:
@@ -746,8 +765,11 @@ def main():
             if "📋" in view:
                 match = filtered[filtered["submission_id"] == sel_id]
                 row = match.iloc[0] if not match.empty else None
-            else:
+            elif "📝" in view:
                 match = [r for r in tracked_rows if r["submission_id"] == sel_id]
+                row = match[0] if match else None
+            else:
+                match = [r for r in fav_rows if r["submission_id"] == sel_id]
                 row = match[0] if match else None
             if row is not None:
                 render_detail(row, notes_data)
