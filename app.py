@@ -34,7 +34,7 @@ NOTE_COLS = [
 ]
 
 STATUS_ICONS = {
-    "New": "🔵", "Meeting Scheduled": "🟡", "Met": "🟢",
+    "New": "", "Meeting Scheduled": "🟡", "Met": "🟢",
     "Pass": "🔴", "Follow-up": "🟠",
 }
 STATUS_OPTIONS = list(STATUS_ICONS.keys())
@@ -156,10 +156,14 @@ st.markdown("""
       font-size: 0.88rem !important;
   }
   .stButton > button:hover { border-color: #c9a040 !important; background: #fdf8ee !important; }
+  .stButton > button[kind="primaryFormSubmit"],
+  .stButton > button[kind="primary"],
   [data-testid="baseButton-primary"] {
-      background: #1a2744 !important; color: #ffffff !important; border-color: #1a2744 !important;
+      background: #1a2744 !important; color: #ffffff !important;
+      border-color: #1a2744 !important; border-left: 4px solid #c9a040 !important;
   }
-  [data-testid="baseButton-primary"]:hover { background: #243860 !important; border-color: #243860 !important; }
+  .stButton > button[kind="primary"]:hover,
+  [data-testid="baseButton-primary"]:hover { background: #243860 !important; border-color: #243860 !important; border-left-color: #c9a040 !important; }
 
   /* ── Metrics ── */
   [data-testid="metric-container"] {
