@@ -47,35 +47,75 @@ st.set_page_config(
 )
 st.markdown("""
 <style>
+  /* ── Hide top-right toolbar buttons ── */
+  [data-testid="stToolbarActions"] { display: none !important; }
+  header[data-testid="stHeader"] { background: transparent !important; }
+
   /* ── Sidebar background ── */
   section[data-testid="stSidebar"],
-  section[data-testid="stSidebar"] > div:first-child {
+  section[data-testid="stSidebar"] > div:first-child,
+  section[data-testid="stSidebar"] > div {
       background: linear-gradient(175deg, #0b1220 0%, #1a2744 100%) !important;
   }
+  /* Sidebar collapse toggle — push below logo */
+  [data-testid="collapsedControl"],
+  button[kind="header"] { margin-top: 180px !important; }
+
+  /* Logo — blend black background into dark sidebar */
+  section[data-testid="stSidebar"] img {
+      mix-blend-mode: screen !important;
+      border-radius: 4px;
+  }
+
   /* Sidebar text */
   section[data-testid="stSidebar"] p,
   section[data-testid="stSidebar"] label,
   section[data-testid="stSidebar"] .stMarkdown,
-  section[data-testid="stSidebar"] span:not([data-baseweb]),
   section[data-testid="stSidebar"] small {
       color: rgba(255,255,255,0.82) !important;
   }
-  section[data-testid="stSidebar"] hr {
-      border-color: rgba(255,255,255,0.15) !important;
-  }
-  section[data-testid="stSidebar"] input,
-  section[data-testid="stSidebar"] [data-baseweb="select"] > div {
+  section[data-testid="stSidebar"] span { color: rgba(255,255,255,0.82) !important; }
+  section[data-testid="stSidebar"] hr { border-color: rgba(255,255,255,0.15) !important; }
+
+  /* Sidebar inputs */
+  section[data-testid="stSidebar"] input {
       background: rgba(255,255,255,0.09) !important;
-      border-color: rgba(255,255,255,0.18) !important;
+      border-color: rgba(255,255,255,0.2) !important;
       color: white !important;
   }
-  /* Radio nav buttons */
-  section[data-testid="stSidebar"] [data-testid="stRadio"] label {
-      color: rgba(255,255,255,0.82) !important;
+  /* Multiselect / select boxes */
+  section[data-testid="stSidebar"] [data-baseweb="select"] > div,
+  section[data-testid="stSidebar"] [data-baseweb="select"] > div > div {
+      background: rgba(255,255,255,0.09) !important;
+      border-color: rgba(255,255,255,0.2) !important;
+      color: rgba(255,255,255,0.85) !important;
   }
-  section[data-testid="stSidebar"] [data-testid="stRadio"] [data-baseweb="radio"] div {
-      border-color: rgba(255,255,255,0.4) !important;
+  section[data-testid="stSidebar"] [data-baseweb="select"] span,
+  section[data-testid="stSidebar"] [data-baseweb="tag"] span {
+      color: rgba(255,255,255,0.9) !important;
   }
+  section[data-testid="stSidebar"] [data-baseweb="tag"] {
+      background: rgba(201,160,64,0.35) !important;
+      border-color: rgba(201,160,64,0.5) !important;
+  }
+  /* Placeholder text */
+  section[data-testid="stSidebar"] [data-baseweb="select"] [aria-selected] {
+      color: rgba(255,255,255,0.85) !important;
+  }
+  /* SVG arrows/icons inside select */
+  section[data-testid="stSidebar"] [data-baseweb="select"] svg { fill: rgba(255,255,255,0.5) !important; }
+
+  /* Radio nav */
+  section[data-testid="stSidebar"] [data-testid="stRadio"] label { color: rgba(255,255,255,0.82) !important; }
+  section[data-testid="stSidebar"] [data-testid="stRadio"] [data-baseweb="radio"] div { border-color: rgba(255,255,255,0.4) !important; }
+
+  /* File uploader */
+  section[data-testid="stSidebar"] [data-testid="stFileUploader"] {
+      background: rgba(255,255,255,0.05) !important;
+      border: 1px dashed rgba(255,255,255,0.2) !important;
+      border-radius: 8px !important;
+  }
+  section[data-testid="stSidebar"] [data-testid="stFileUploader"] * { color: rgba(255,255,255,0.7) !important; }
 
   /* ── Main layout ── */
   .block-container { padding-top: 1.6rem !important; }
@@ -90,44 +130,26 @@ st.markdown("""
       color: #1a2744 !important;
       font-size: 0.88rem !important;
   }
-  .stButton > button:hover {
-      border-color: #c9a040 !important;
-      background: #fdf8ee !important;
-  }
+  .stButton > button:hover { border-color: #c9a040 !important; background: #fdf8ee !important; }
   [data-testid="baseButton-primary"] {
-      background: #1a2744 !important;
-      color: #ffffff !important;
-      border-color: #1a2744 !important;
+      background: #1a2744 !important; color: #ffffff !important; border-color: #1a2744 !important;
   }
-  [data-testid="baseButton-primary"]:hover {
-      background: #243860 !important;
-      border-color: #243860 !important;
-  }
+  [data-testid="baseButton-primary"]:hover { background: #243860 !important; border-color: #243860 !important; }
 
   /* ── Metrics ── */
   [data-testid="metric-container"] {
-      background: #f7f9fc;
-      border: 1px solid #e2e6ea;
-      border-radius: 8px;
-      padding: 10px 14px;
+      background: #f7f9fc; border: 1px solid #e2e6ea; border-radius: 8px; padding: 10px 14px;
   }
   div[data-testid="stMetricValue"] { font-size: 1rem; font-weight: 600; color: #1a2744; }
   div[data-testid="stMetricLabel"] { font-size: 0.75rem; color: #6c757d; }
 
-  /* ── Info / expander boxes ── */
+  /* ── Misc ── */
   .stAlert { border-radius: 8px !important; }
   [data-testid="stExpander"] { border: 1px solid #e2e6ea !important; border-radius: 8px !important; }
-
-  /* ── Download button ── */
   [data-testid="stDownloadButton"] button {
-      background: #f7f9fc !important;
-      color: #1a2744 !important;
-      border: 1px solid #c9a040 !important;
-      border-radius: 6px !important;
-      font-weight: 500 !important;
+      background: #f7f9fc !important; color: #1a2744 !important;
+      border: 1px solid #c9a040 !important; border-radius: 6px !important; font-weight: 500 !important;
   }
-
-  /* ── Dividers ── */
   hr { border-color: #e2e6ea !important; margin: 1.2rem 0 !important; }
   .stCaption { color: #8896a5 !important; font-size: 0.82rem !important; }
 </style>
@@ -650,7 +672,7 @@ def main():
                 ticker = safe(row.get("Primary Company (Ticker)", "—"))
                 sector = safe(row.get("Sector / Industry", ""))
                 sdate  = safe(row.get("Submission Date", ""))
-                badge  = "  ✅" if has_notes(note) else ""
+                badge  = "  📝" if has_notes(note) else ""
                 label  = f"{icon} **{name}**  ·  {ticker}{badge}\n{sector}  ·  {sdate}"
                 if st.button(label, key=f"btn_{sub_id}", use_container_width=True,
                              type="primary" if st.session_state.get(selected_key) == sub_id else "secondary"):
