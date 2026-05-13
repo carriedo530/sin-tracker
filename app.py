@@ -82,13 +82,13 @@ st.markdown("""
 
   /* Sidebar inputs */
   section[data-testid="stSidebar"] input {
-      background: rgba(255,255,255,0.12) !important;
+      background: #ffffff !important;
       border-color: rgba(255,255,255,0.3) !important;
-      color: #ffffff !important;
-      caret-color: #ffffff !important;
-      -webkit-text-fill-color: #ffffff !important;
+      color: #1a2744 !important;
+      caret-color: #1a2744 !important;
+      -webkit-text-fill-color: #1a2744 !important;
   }
-  section[data-testid="stSidebar"] input::placeholder { color: rgba(255,255,255,0.45) !important; }
+  section[data-testid="stSidebar"] input::placeholder { color: #8896a5 !important; }
   /* Multiselect / select boxes */
   section[data-testid="stSidebar"] [data-baseweb="select"] > div,
   section[data-testid="stSidebar"] [data-baseweb="select"] > div > div {
@@ -597,15 +597,7 @@ def main():
 
     with st.sidebar:
         st.markdown(
-            f"<div style='display:flex;align-items:center;gap:10px;margin-bottom:6px;'>"
-            f"<img src='{LOGO_URL}' style='width:64px;height:64px;object-fit:cover;"
-            f"border-radius:6px;mix-blend-mode:screen;flex-shrink:0;'>"
-            f"<div style='min-width:0;'>"
-            f"<p style='color:#ffffff;font-size:1.05rem;font-weight:700;margin:0;line-height:1.2;"
-            f"font-family:Georgia,serif;'>First Wave Capital</p>"
-            f"<p style='color:rgba(255,255,255,0.45);font-size:0.65rem;letter-spacing:0.12em;"
-            f"text-transform:uppercase;margin:3px 0 0 0;'>Specialist Insights Network</p>"
-            f"</div></div>",
+            f"<img src='{LOGO_URL}' style='width:100%;mix-blend-mode:screen;border-radius:6px;display:block;'>",
             unsafe_allow_html=True,
         )
         search = st.text_input("Search", placeholder="🔍 Search name, ticker, email", label_visibility="collapsed")
