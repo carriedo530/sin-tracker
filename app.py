@@ -39,15 +39,118 @@ STATUS_ICONS = {
 }
 STATUS_OPTIONS = list(STATUS_ICONS.keys())
 
+LOGO_URL = "https://custom-images.strikinglycdn.com/res/hrscywv4p/image/upload/c_limit,fl_lossy,h_630,w_1200,f_auto,q_auto/3075/614271_402360.jpeg"
+
 st.set_page_config(
-    page_title="SIN Tracker", page_icon="📊",
+    page_title="FirstWave | SIN Tracker", page_icon="🌊",
     layout="wide", initial_sidebar_state="expanded",
 )
 st.markdown("""
 <style>
-    .block-container { padding-top: 1.5rem; }
-    div[data-testid="stMetricValue"] { font-size: 1rem; }
-    .stButton > button { text-align: left !important; }
+  /* ── Sidebar ── */
+  [data-testid="stSidebar"] {
+      background: linear-gradient(175deg, #0b1220 0%, #1a2744 100%) !important;
+  }
+  [data-testid="stSidebar"] .stMarkdown p,
+  [data-testid="stSidebar"] .stMarkdown,
+  [data-testid="stSidebar"] label,
+  [data-testid="stSidebar"] span,
+  [data-testid="stSidebar"] .stCheckbox span {
+      color: rgba(255,255,255,0.85) !important;
+  }
+  [data-testid="stSidebar"] .stTextInput input,
+  [data-testid="stSidebar"] .stMultiSelect [data-baseweb="select"] {
+      background: rgba(255,255,255,0.08) !important;
+      border-color: rgba(255,255,255,0.15) !important;
+      color: white !important;
+  }
+  [data-testid="stSidebar"] hr { border-color: rgba(255,255,255,0.12) !important; }
+  [data-testid="stSidebar"] .stFileUploader {
+      background: rgba(255,255,255,0.06) !important;
+      border: 1px dashed rgba(255,255,255,0.25) !important;
+      border-radius: 8px !important;
+  }
+  [data-testid="stSidebar"] .stSuccess {
+      background: rgba(40,167,69,0.2) !important;
+      color: #90ee90 !important;
+  }
+
+  /* ── Main layout ── */
+  .block-container { padding-top: 1.8rem; max-width: 1400px; }
+
+  /* ── Submission list buttons ── */
+  [data-testid="stSidebar"] .stButton > button,
+  .stButton > button {
+      text-align: left !important;
+      border-radius: 6px !important;
+      border: 1px solid #e2e6ea !important;
+      padding: 10px 14px !important;
+      background: #ffffff !important;
+      color: #1a2744 !important;
+      font-size: 0.88rem !important;
+      transition: border-color 0.15s, background 0.15s !important;
+  }
+  .stButton > button:hover {
+      border-color: #c9a040 !important;
+      background: #fdf8ee !important;
+  }
+  /* Active / selected */
+  [data-testid="baseButton-primary"] {
+      background: #1a2744 !important;
+      color: #ffffff !important;
+      border-color: #1a2744 !important;
+  }
+  [data-testid="baseButton-primary"]:hover {
+      background: #243860 !important;
+      border-color: #243860 !important;
+  }
+
+  /* ── Tabs ── */
+  .stTabs [data-baseweb="tab-list"] { gap: 4px; border-bottom: 2px solid #e2e6ea; }
+  .stTabs [data-baseweb="tab"] {
+      background: transparent !important;
+      color: #6c757d !important;
+      font-weight: 500;
+      padding: 8px 18px;
+      border-radius: 6px 6px 0 0;
+  }
+  .stTabs [aria-selected="true"] {
+      color: #1a2744 !important;
+      border-bottom: 3px solid #c9a040 !important;
+      font-weight: 600 !important;
+  }
+
+  /* ── Metrics ── */
+  [data-testid="metric-container"] {
+      background: #f7f9fc;
+      border: 1px solid #e2e6ea;
+      border-radius: 8px;
+      padding: 10px 14px;
+  }
+  div[data-testid="stMetricValue"] { font-size: 1rem; font-weight: 600; color: #1a2744; }
+  div[data-testid="stMetricLabel"] { font-size: 0.75rem; color: #6c757d; }
+
+  /* ── Info / alert boxes ── */
+  .stAlert { border-radius: 8px !important; }
+  [data-testid="stExpander"] { border: 1px solid #e2e6ea !important; border-radius: 8px !important; }
+
+  /* ── Download button ── */
+  [data-testid="stDownloadButton"] button {
+      background: #f7f9fc !important;
+      color: #1a2744 !important;
+      border: 1px solid #c9a040 !important;
+      border-radius: 6px !important;
+      font-weight: 500 !important;
+  }
+  [data-testid="stDownloadButton"] button:hover {
+      background: #fdf8ee !important;
+  }
+
+  /* ── Dividers ── */
+  hr { border-color: #e2e6ea !important; margin: 1.2rem 0 !important; }
+
+  /* ── Caption / muted text ── */
+  .stCaption, [data-testid="stCaptionContainer"] { color: #8896a5 !important; font-size: 0.82rem !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -447,8 +550,12 @@ def main():
     notes_data = load_notes()
 
     with st.sidebar:
-        st.markdown("## 📊 SIN Tracker")
-        st.caption("First Wave Capital")
+        st.image(LOGO_URL, use_container_width=True)
+        st.markdown(
+            "<p style='color:rgba(255,255,255,0.5);font-size:0.72rem;letter-spacing:0.12em;"
+            "text-transform:uppercase;margin:-8px 0 4px 2px;'>Specialist Insights Network</p>",
+            unsafe_allow_html=True,
+        )
         st.divider()
         uploaded = st.file_uploader("Upload new export (.csv or .xlsx)", type=["csv", "xlsx", "xls"])
         st.divider()
@@ -468,7 +575,12 @@ def main():
         df = load_submissions_from_sheet()
 
     if df is None or df.empty:
-        st.title("Specialist Insights Network")
+        st.markdown(
+            "<h1 style='color:#1a2744;font-family:Georgia,serif;font-weight:700;'>"
+            "Specialist Insights Network</h1>"
+            "<p style='color:#8896a5;font-size:1rem;margin-top:-10px;'>First Wave Capital</p>",
+            unsafe_allow_html=True,
+        )
         st.info(
             "No submissions loaded yet. Upload your first Strikingly export from the sidebar.\n\n"
             "**Tip:** Always export *All Time* so previous weeks stay visible."
@@ -526,6 +638,13 @@ def main():
 
     if "selected_id" not in st.session_state:
         st.session_state.selected_id = None
+
+    st.markdown(
+        "<p style='color:#8896a5;font-size:0.8rem;letter-spacing:0.1em;text-transform:uppercase;"
+        "margin-bottom:0.2rem;'>First Wave Capital</p>"
+        "<h2 style='color:#1a2744;font-family:Georgia,serif;margin-top:0;'>Specialist Insights Network</h2>",
+        unsafe_allow_html=True,
+    )
 
     # ── Tabs ──
     tab_all, tab_tracked = st.tabs([
