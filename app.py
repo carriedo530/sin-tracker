@@ -43,7 +43,7 @@ LOGO_URL = "https://custom-images.strikinglycdn.com/res/hrscywv4p/image/upload/c
 
 st.set_page_config(
     page_title="FirstWave | SIN Tracker", page_icon="🌊",
-    layout="wide", initial_sidebar_state="expanded",
+    layout="wide", initial_sidebar_state="auto",
 )
 st.markdown("""
 <style>
@@ -193,6 +193,18 @@ st.markdown("""
   }
   hr { border-color: #e2e6ea !important; margin: 1.2rem 0 !important; }
   .stCaption { color: #8896a5 !important; font-size: 0.82rem !important; }
+
+  /* ── Mobile ── */
+  @media (max-width: 768px) {
+    .block-container { min-width: unset !important; padding: 0.5rem 0.8rem !important; }
+    [data-testid="stHorizontalBlock"] { flex-direction: column !important; }
+    [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+        width: 100% !important; min-width: 100% !important; flex: none !important;
+    }
+    .stButton > button { padding: 12px 14px !important; font-size: 1rem !important; }
+    h2 { font-size: 1.4rem !important; }
+    [data-testid="metric-container"] { min-width: 45% !important; }
+  }
 </style>
 """, unsafe_allow_html=True)
 
