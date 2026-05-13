@@ -52,6 +52,8 @@ st.markdown("""
   #MainMenu { display: none !important; }
   [data-testid="stMainMenuButton"] { display: none !important; }
   header[data-testid="stHeader"] { background: transparent !important; }
+  /* Hide image expand button on sidebar logo */
+  [data-testid="stImageActionButtons"] { display: none !important; }
   /* Hide heading anchor link icons */
   [data-testid="stHeadingActionElements"],
   [data-testid="stHeadingActionElements"] * { display: none !important; visibility: hidden !important; opacity: 0 !important; }
@@ -795,7 +797,7 @@ def main():
     st.caption(f"{len(filtered)} submission{'s' if len(filtered) != 1 else ''}  ·  {tracked_count} tracked")
     st.divider()
 
-    col_list, col_detail = st.columns([1, 2], gap="large")
+    col_list, col_detail = st.columns([1, 3], gap="large")
 
     # ── Submission list (left column) ──
     with col_list:
