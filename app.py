@@ -70,7 +70,10 @@ st.markdown("""
   section[data-testid="stSidebar"] > div {
       background: linear-gradient(175deg, #0b1220 0%, #1a2744 100%) !important;
   }
-  /* Logo in HTML — blend handled inline */
+  /* Sidebar top padding — align logo with main title */
+  section[data-testid="stSidebar"] > div:first-child { padding-top: 0.6rem !important; }
+  /* Logo blend */
+  section[data-testid="stSidebar"] img { mix-blend-mode: screen !important; border-radius: 6px; }
 
   /* Sidebar text */
   section[data-testid="stSidebar"] p,
@@ -140,7 +143,7 @@ st.markdown("""
   section[data-testid="stSidebar"] [data-testid="stFileUploader"] * { color: rgba(255,255,255,0.85) !important; }
 
   /* ── Main layout ── */
-  .block-container { padding-top: 1.6rem !important; }
+  .block-container { padding-top: 3rem !important; }
 
   /* ── Submission list buttons ── */
   .stButton > button {
@@ -678,10 +681,7 @@ def main():
     notes_data = load_notes()
 
     with st.sidebar:
-        st.markdown(
-            f"<img src='{LOGO_URL}' style='width:100%;mix-blend-mode:screen;border-radius:6px;display:block;'>",
-            unsafe_allow_html=True,
-        )
+        st.image(LOGO_URL, use_container_width=True)
         search = st.text_input("Search", placeholder="🔍 Search name, ticker, email", label_visibility="collapsed")
         st.divider()
         view = st.radio("View", ["📋  All Submissions", "📝  Notes", "⭐  Favorites"], label_visibility="collapsed")
