@@ -146,6 +146,9 @@ st.markdown("""
   .block-container { padding-top: 1.6rem !important; padding-left: 1.5rem !important; padding-right: 1.5rem !important; min-width: 700px !important; }
 
   /* ── Submission list buttons ── */
+  .stButton > button, .stButton > button p, .stButton > button div {
+      text-align: left !important;
+  }
   .stButton > button {
       text-align: left !important;
       border-radius: 6px !important;
