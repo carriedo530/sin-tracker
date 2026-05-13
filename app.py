@@ -64,11 +64,16 @@ st.markdown("""
   /* No pointer cursor on any non-button element */
   p a, span a, div a:not([data-testid]) { cursor: default !important; }
 
-  /* ── Sidebar background ── */
+  /* ── Sidebar background & fixed padding ── */
   section[data-testid="stSidebar"],
   section[data-testid="stSidebar"] > div:first-child,
   section[data-testid="stSidebar"] > div {
       background: linear-gradient(175deg, #0b1220 0%, #1a2744 100%) !important;
+  }
+  section[data-testid="stSidebar"] > div:first-child {
+      padding-left: 1rem !important;
+      padding-right: 1rem !important;
+      padding-top: 1rem !important;
   }
 
   /* Sidebar text */
