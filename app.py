@@ -55,7 +55,9 @@ st.markdown("""
   /* Hide heading anchor link icons */
   [data-testid="stHeadingActionElements"],
   [data-testid="stHeadingActionElements"] * { display: none !important; visibility: hidden !important; opacity: 0 !important; }
-  h1 a, h2 a, h3 a { pointer-events: none !important; color: inherit !important; text-decoration: none !important; cursor: default !important; }
+  [data-testid="StyledLinkIconContainer"] { display: none !important; visibility: hidden !important; }
+  h1 a, h2 a, h3 a { display: none !important; pointer-events: none !important; }
+  h1 svg, h2 svg, h3 svg { display: none !important; }
   /* Remove blue hyperlink styling everywhere in main content */
   .stMarkdown a[href^="mailto"],
   .stMarkdown a { color: inherit !important; text-decoration: none !important; pointer-events: none !important; cursor: default !important; }
