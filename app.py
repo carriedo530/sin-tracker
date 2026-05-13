@@ -53,11 +53,14 @@ st.markdown("""
   [data-testid="stMainMenuButton"] { display: none !important; }
   header[data-testid="stHeader"] { background: transparent !important; }
   /* Hide heading anchor link icons */
-  [data-testid="stHeadingActionElements"] { display: none !important; }
-  h1 a, h2 a, h3 a { pointer-events: none !important; color: inherit !important; text-decoration: none !important; }
+  [data-testid="stHeadingActionElements"],
+  [data-testid="stHeadingActionElements"] * { display: none !important; visibility: hidden !important; opacity: 0 !important; }
+  h1 a, h2 a, h3 a { pointer-events: none !important; color: inherit !important; text-decoration: none !important; cursor: default !important; }
   /* Remove blue hyperlink styling everywhere in main content */
   .stMarkdown a[href^="mailto"],
-  .stMarkdown a { color: inherit !important; text-decoration: none !important; pointer-events: none !important; }
+  .stMarkdown a { color: inherit !important; text-decoration: none !important; pointer-events: none !important; cursor: default !important; }
+  /* No pointer cursor on any non-button element */
+  p a, span a, div a:not([data-testid]) { cursor: default !important; }
 
   /* ── Sidebar background ── */
   section[data-testid="stSidebar"],
