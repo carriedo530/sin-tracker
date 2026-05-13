@@ -150,6 +150,7 @@ st.markdown("""
       text-align: left !important;
       border-radius: 6px !important;
       border: 1px solid #e2e6ea !important;
+      border-left: 4px solid transparent !important;
       padding: 10px 14px !important;
       background: #ffffff !important;
       color: #1a2744 !important;
