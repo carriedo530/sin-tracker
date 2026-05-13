@@ -30,7 +30,7 @@ SUBMISSION_COLS = [
 ]
 NOTE_COLS = [
     "submission_id", "status", "meeting_date", "followup_date",
-    "meeting_notes", "followup_notes", "starred", "last_updated",
+    "meeting_notes", "followup_notes", "starred", "last_updated", "notes_log",
 ]
 
 STATUS_ICONS = {
@@ -208,6 +208,10 @@ def get_worksheet(tab_name, headers):
         return None
     try:
         ws = ss.worksheet(tab_name)
+        existing_headers = ws.row_values(1)
+        for i, h in enumerate(headers):
+            if i >= len(existing_headers) or existing_headers[i] != h:
+                ws.update_cell(1, i + 1, h)
     except gspread.WorksheetNotFound:
         ws = ss.add_worksheet(tab_name, rows=2000, cols=len(headers))
         ws.append_row(headers)
@@ -285,6 +289,20 @@ def save_note(notes_data, sub_id, note):
             json.dump(notes_data, f, indent=2)
 
 
+def delete_note(notes_data, sub_id):
+    notes_data.pop(sub_id, None)
+    st.session_state.notes_cache = notes_data
+    ws = get_worksheet("Notes", NOTE_COLS)
+    if ws is not None:
+        records = ws.get_all_records()
+        row_idx = next((i + 2 for i, r in enumerate(records) if r.get("submission_id") == sub_id), None)
+        if row_idx:
+            ws.delete_rows(row_idx)
+    else:
+        with open(NOTES_FILE, "w") as f:
+            json.dump(notes_data, f, indent=2)
+
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def parse_name(raw):
@@ -336,8 +354,14 @@ def is_test_entry(row):
 
 
 def has_notes(note):
-    return any(note.get(k) for k in ["meeting_notes", "followup_notes", "meeting_date", "followup_date"]) \
-           or note.get("status", "New") != "New"
+    if any(note.get(k) for k in ["meeting_notes", "followup_notes", "meeting_date", "followup_date"]):
+        return True
+    if note.get("status", "New") != "New":
+        return True
+    try:
+        return bool(json.loads(note.get("notes_log") or "[]"))
+    except Exception:
+        return False
 
 
 # ── Notes modal ───────────────────────────────────────────────────────────────
@@ -372,21 +396,70 @@ def notes_dialog(sub_id, row, notes_data):
             followup_date = today + timedelta(days=days_map[quick])
 
     meeting_notes  = st.text_area("Meeting Notes", value=note.get("meeting_notes", ""),
-        placeholder="How did it go? Key takeaways, impressions...", height=120)
+        placeholder="How did it go? Key takeaways, impressions...", height=100)
     followup_notes = st.text_area("Follow-up / Action Items", value=note.get("followup_notes", ""),
-        placeholder="Next steps, requests, action items...", height=90)
+        placeholder="Next steps, requests, action items...", height=80)
 
-    if st.button("💾 Save Notes", type="primary", use_container_width=True):
-        save_note(notes_data, sub_id, {
-            "status":         status_val,
-            "meeting_date":   meeting_date.strftime("%Y-%m-%d") if meeting_date else "",
-            "followup_date":  followup_date.strftime("%Y-%m-%d") if followup_date else "",
-            "meeting_notes":  meeting_notes,
-            "followup_notes": followup_notes,
-            "last_updated":   datetime.now().isoformat(),
-        })
-        st.success("Saved!")
-        st.rerun()
+    # ── Notes log ──
+    st.divider()
+    st.markdown("**📋 Notes Log**")
+    try:
+        notes_log = json.loads(note.get("notes_log") or "[]")
+    except Exception:
+        notes_log = []
+
+    if notes_log:
+        for i, entry in enumerate(reversed(notes_log)):
+            real_i = len(notes_log) - 1 - i
+            c_text, c_del = st.columns([7, 1])
+            with c_text:
+                ts_str = entry.get("ts", "")[:16].replace("T", " ")
+                st.markdown(
+                    f"<div style='background:#f7f9fc;border-radius:6px;padding:6px 10px;margin-bottom:4px;'>"
+                    f"<small style='color:#8896a5;'>{ts_str}</small><br>"
+                    f"<span style='font-size:0.9rem;'>{html.escape(entry.get('text',''))}</span></div>",
+                    unsafe_allow_html=True,
+                )
+            with c_del:
+                if st.button("🗑️", key=f"dellog_{sub_id}_{real_i}", help="Delete this entry"):
+                    notes_log.pop(real_i)
+                    updated = {**note, "notes_log": json.dumps(notes_log), "last_updated": datetime.now().isoformat()}
+                    save_note(notes_data, sub_id, updated)
+                    st.rerun()
+    else:
+        st.caption("No log entries yet.")
+
+    add_col, btn_col = st.columns([5, 1])
+    with add_col:
+        new_entry = st.text_input("New log entry", placeholder="Add a quick note...", label_visibility="collapsed")
+    with btn_col:
+        if st.button("➕", help="Add entry"):
+            if new_entry.strip():
+                notes_log.append({"ts": datetime.now().isoformat(), "text": new_entry.strip()})
+                updated = {**note, "notes_log": json.dumps(notes_log), "last_updated": datetime.now().isoformat()}
+                save_note(notes_data, sub_id, updated)
+                st.rerun()
+
+    st.divider()
+    save_col, del_col = st.columns([3, 1])
+    with save_col:
+        if st.button("💾 Save Notes", type="primary", use_container_width=True):
+            save_note(notes_data, sub_id, {
+                "status":         status_val,
+                "meeting_date":   meeting_date.strftime("%Y-%m-%d") if meeting_date else "",
+                "followup_date":  followup_date.strftime("%Y-%m-%d") if followup_date else "",
+                "meeting_notes":  meeting_notes,
+                "followup_notes": followup_notes,
+                "notes_log":      json.dumps(notes_log),
+                "starred":        note.get("starred", False),
+                "last_updated":   datetime.now().isoformat(),
+            })
+            st.success("Saved!")
+            st.rerun()
+    with del_col:
+        if st.button("🗑️ Delete All", use_container_width=True, help="Remove all notes for this submission"):
+            delete_note(notes_data, sub_id)
+            st.rerun()
 
 
 # ── PDF ───────────────────────────────────────────────────────────────────────
