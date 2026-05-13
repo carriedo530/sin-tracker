@@ -261,8 +261,9 @@ def save_note(notes_data, sub_id, note):
         existing = next(
             (i + 2 for i, r in enumerate(records) if r.get("submission_id") == sub_id), None
         )
+        col_letter = chr(ord("A") + len(NOTE_COLS) - 1)
         if existing:
-            ws.update(f"A{existing}:G{existing}", [row_values])
+            ws.update(f"A{existing}:{col_letter}{existing}", [row_values])
         else:
             ws.append_row(row_values)
     else:
