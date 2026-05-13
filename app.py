@@ -763,8 +763,6 @@ def main():
     # ── Header ──
     tracked_count = sum(1 for _, r in filtered.iterrows() if has_notes(notes_data.get(r["submission_id"], {})))
     st.markdown(
-        "<p style='color:#8896a5;font-size:0.75rem;letter-spacing:0.12em;text-transform:uppercase;"
-        "margin-bottom:2px;'>First Wave Capital</p>"
         "<h2 style='color:#1a2744;font-family:Georgia,serif;margin-top:0;margin-bottom:0.3rem;'>"
         "Specialist Insights Network</h2>",
         unsafe_allow_html=True,
