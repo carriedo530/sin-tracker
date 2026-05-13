@@ -30,7 +30,7 @@ SUBMISSION_COLS = [
 ]
 NOTE_COLS = [
     "submission_id", "status", "meeting_date", "followup_date",
-    "meeting_notes", "followup_notes", "last_updated",
+    "meeting_notes", "followup_notes", "starred", "last_updated",
 ]
 
 STATUS_ICONS = {
@@ -47,9 +47,17 @@ st.set_page_config(
 )
 st.markdown("""
 <style>
-  /* ── Hide top-right toolbar buttons ── */
+  /* ── Hide top-right toolbar & main menu ── */
   [data-testid="stToolbarActions"] { display: none !important; }
+  #MainMenu { display: none !important; }
+  [data-testid="stMainMenuButton"] { display: none !important; }
   header[data-testid="stHeader"] { background: transparent !important; }
+  /* Hide heading anchor link icons */
+  [data-testid="stHeadingActionElements"] { display: none !important; }
+  h1 a, h2 a, h3 a { pointer-events: none !important; color: inherit !important; text-decoration: none !important; }
+  /* Remove blue hyperlink styling everywhere in main content */
+  .stMarkdown a[href^="mailto"],
+  .stMarkdown a { color: inherit !important; text-decoration: none !important; pointer-events: none !important; }
 
   /* ── Sidebar background ── */
   section[data-testid="stSidebar"],
@@ -489,26 +497,53 @@ def render_detail(row, notes_data):
     mktcap   = safe(row.get("Market Capitalization", ""))
     target   = safe(row.get("12-Month Target Price", ""))
     sub_date = safe(row.get("Submission Date", ""))
+    is_starred = note.get("starred", False)
 
-    # Header row with notes button
-    h1, h2 = st.columns([3, 1])
-    with h1:
-        st.markdown(f"## {ticker}  —  {name}")
-        st.caption(f"{email}  ·  {phone}  ·  Submitted {sub_date}")
-    with h2:
+    # ── Header ──
+    h_left, h_right = st.columns([3, 1])
+    with h_left:
+        star_icon = "⭐" if is_starred else "☆"
+        st.markdown(
+            f"<h2 style='color:#1a2744;font-family:Georgia,serif;margin-bottom:4px;'>"
+            f"{html.escape(ticker)}  —  {html.escape(name)}</h2>",
+            unsafe_allow_html=True,
+        )
+        # Star button inline below title
+        star_col, info_col = st.columns([1, 6])
+        with star_col:
+            if st.button(star_icon, key=f"star_{sub_id}", help="Star this submission"):
+                updated = {**note, "starred": not is_starred, "last_updated": datetime.now().isoformat()}
+                save_note(notes_data, sub_id, updated)
+                st.rerun()
+        with info_col:
+            st.markdown(
+                f"<p style='color:#8896a5;font-size:0.83rem;margin:0;padding-top:6px;'>"
+                f"{html.escape(email)}  ·  {html.escape(phone)}  ·  Submitted {sub_date}</p>",
+                unsafe_allow_html=True,
+            )
+
+    with h_right:
+        # Notes button
         if has_notes(note):
             status = note.get("status", "New")
-            icon   = STATUS_ICONS.get(status, "⚪")
-            st.markdown(f"**{icon} {status}**")
-            if note.get("meeting_date"):
-                st.caption(f"Met: {note['meeting_date']}")
-            if note.get("followup_date"):
-                st.caption(f"Follow-up: {note['followup_date']}")
+            st.markdown(
+                f"<p style='font-size:0.82rem;font-weight:600;color:#1a2744;"
+                f"margin-bottom:4px;'>{STATUS_ICONS.get(status,'')} {status}</p>",
+                unsafe_allow_html=True,
+            )
             if st.button("✏️ Edit Notes", key=f"edit_{sub_id}", use_container_width=True):
                 notes_dialog(sub_id, row, notes_data)
         else:
             if st.button("📝 Add Notes", key=f"add_{sub_id}", use_container_width=True, type="primary"):
                 notes_dialog(sub_id, row, notes_data)
+        # PDF button — top right
+        pdf_buf = generate_pdf(row, notes_data)
+        st.download_button(
+            "📄 Export PDF", data=pdf_buf,
+            file_name=f"{ticker}_{name.replace(' ', '_')}.pdf",
+            mime="application/pdf", key=f"pdf_{sub_id}",
+            use_container_width=True,
+        )
 
     c1, c2, c3 = st.columns(3)
     c1.metric("Market Cap", mktcap or "—")
@@ -534,15 +569,12 @@ def render_detail(row, notes_data):
 
     doc_link = safe(row.get("Model or Supporting Materials Work", ""))
     if doc_link:
-        st.markdown(f"📎 [Download Supporting Materials]({doc_link})")
-
-    st.divider()
-    pdf_buf = generate_pdf(row, notes_data)
-    st.download_button(
-        "📄 Export PDF", data=pdf_buf,
-        file_name=f"{ticker}_{name.replace(' ', '_')}.pdf",
-        mime="application/pdf", key=f"pdf_{sub_id}",
-    )
+        st.markdown(
+            f"<p>📎 <a href='{doc_link}' target='_blank' "
+            f"style='color:#1a2744;font-weight:500;text-decoration:underline;pointer-events:auto;'>"
+            f"Download Supporting Materials</a></p>",
+            unsafe_allow_html=True,
+        )
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
