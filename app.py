@@ -738,7 +738,7 @@ def render_detail(row, notes_data):
         if linkedin:
             sc[0].link_button("🔗 LinkedIn", linkedin)
         if twitter:
-            sc[1].link_button("𝕏 Twitter", twitter_url(twitter))
+            sc[1].link_button("X / Twitter", twitter_url(twitter))
 
     st.divider()
 
