@@ -28,8 +28,6 @@ SUBMISSION_COLS = [
     "12-Month Target Price", "Professional Bio", "Your Edge",
     "Investment Summary", "Model or Supporting Materials Work",
 ]
-# Social columns stored alongside submissions but not in the fixed sheet schema
-SOCIAL_COLS = ["LinkedIn URL", "Twitter (X) Username or URL"]
 NOTE_COLS = [
     "submission_id", "status", "meeting_date", "followup_date",
     "meeting_notes", "followup_notes", "starred", "last_updated", "notes_log",
@@ -246,13 +244,7 @@ def get_worksheet(tab_name, headers):
     if cache_key in st.session_state:
         return st.session_state[cache_key]
     try:
-        try:
-            ws = ss.worksheet(tab_name)
-        except gspread.WorksheetNotFound:
-            ws = ss.add_worksheet(tab_name, rows=2000, cols=len(headers))
-            ws.append_row(headers)
-            st.session_state[cache_key] = ws
-            return ws
+        ws = ss.worksheet(tab_name)
         try:
             existing = ws.row_values(1)
             if len(existing) < len(headers):
@@ -260,10 +252,11 @@ def get_worksheet(tab_name, headers):
                     ws.update_cell(1, i + 1, headers[i])
         except Exception:
             pass
-        st.session_state[cache_key] = ws
-        return ws
-    except Exception:
-        return None
+    except gspread.WorksheetNotFound:
+        ws = ss.add_worksheet(tab_name, rows=2000, cols=len(headers))
+        ws.append_row(headers)
+    st.session_state[cache_key] = ws
+    return ws
 
 
 # ── Submissions ───────────────────────────────────────────────────────────────
@@ -274,38 +267,25 @@ def load_submissions_from_sheet():
     ws = get_worksheet("Submissions", SUBMISSION_COLS)
     if ws is None:
         return None
-    try:
-        records = ws.get_all_records()
-    except Exception:
-        return None
+    records = ws.get_all_records()
     if not records:
         return None
-    try:
-        df = pd.DataFrame(records)
-        if "Submission Time" in df.columns:
-            df["Submission Time"] = pd.to_datetime(df["Submission Time"], utc=True, errors="coerce")
-            df["Submission Date"] = df["Submission Time"].dt.strftime("%Y-%m-%d")
-        st.session_state.submissions_cache = df
-        return df
-    except Exception:
-        return None
+    df = pd.DataFrame(records)
+    df["Submission Time"] = pd.to_datetime(df["Submission Time"], utc=True, errors="coerce")
+    df["Submission Date"] = df["Submission Time"].dt.strftime("%Y-%m-%d")
+    st.session_state.submissions_cache = df
+    return df
 
 
 def save_submissions_to_sheet(df):
-    # Determine which extra columns are present in this upload
-    extra_cols = [c for c in SOCIAL_COLS if c in df.columns]
-    all_cols = SUBMISSION_COLS + extra_cols
-    ws = get_worksheet("Submissions", all_cols)
+    ws = get_worksheet("Submissions", SUBMISSION_COLS)
     if ws is None:
         return
-    try:
-        rows = [[safe(row.get(c, "")) for c in all_cols] for _, row in df.iterrows()]
-        ws.clear()
-        ws.append_row(all_cols)
-        if rows:
-            ws.append_rows(rows)
-    except Exception:
-        pass
+    rows = [[safe(row.get(c, "")) for c in SUBMISSION_COLS] for _, row in df.iterrows()]
+    ws.clear()
+    ws.append_row(SUBMISSION_COLS)
+    if rows:
+        ws.append_rows(rows)
     st.session_state.submissions_cache = df
 
 
@@ -316,20 +296,14 @@ def load_notes():
         return st.session_state.notes_cache
     ws = get_worksheet("Notes", NOTE_COLS)
     if ws is not None:
-        try:
-            records = ws.get_all_records()
-            notes = {
-                r["submission_id"]: {k: r.get(k, "") for k in NOTE_COLS[1:]}
-                for r in records if r.get("submission_id")
-            }
-        except Exception:
-            notes = {}
+        records = ws.get_all_records()
+        notes = {
+            r["submission_id"]: {k: r.get(k, "") for k in NOTE_COLS[1:]}
+            for r in records if r.get("submission_id")
+        }
     elif os.path.exists(NOTES_FILE):
-        try:
-            with open(NOTES_FILE) as f:
-                notes = json.load(f)
-        except Exception:
-            notes = {}
+        with open(NOTES_FILE) as f:
+            notes = json.load(f)
     else:
         notes = {}
     st.session_state.notes_cache = notes
@@ -341,19 +315,16 @@ def save_note(notes_data, sub_id, note):
     st.session_state.notes_cache = notes_data
     ws = get_worksheet("Notes", NOTE_COLS)
     if ws is not None:
-        try:
-            row_values = [sub_id] + [note.get(k, "") for k in NOTE_COLS[1:]]
-            records = ws.get_all_records()
-            existing = next(
-                (i + 2 for i, r in enumerate(records) if r.get("submission_id") == sub_id), None
-            )
-            col_letter = chr(ord("A") + len(NOTE_COLS) - 1)
-            if existing:
-                ws.update(f"A{existing}:{col_letter}{existing}", [row_values])
-            else:
-                ws.append_row(row_values)
-        except Exception:
-            pass
+        row_values = [sub_id] + [note.get(k, "") for k in NOTE_COLS[1:]]
+        records = ws.get_all_records()
+        existing = next(
+            (i + 2 for i, r in enumerate(records) if r.get("submission_id") == sub_id), None
+        )
+        col_letter = chr(ord("A") + len(NOTE_COLS) - 1)
+        if existing:
+            ws.update(f"A{existing}:{col_letter}{existing}", [row_values])
+        else:
+            ws.append_row(row_values)
     else:
         with open(NOTES_FILE, "w") as f:
             json.dump(notes_data, f, indent=2)
@@ -399,19 +370,13 @@ def delete_note(notes_data, sub_id):
     st.session_state.notes_cache = notes_data
     ws = get_worksheet("Notes", NOTE_COLS)
     if ws is not None:
-        try:
-            records = ws.get_all_records()
-            row_idx = next((i + 2 for i, r in enumerate(records) if r.get("submission_id") == sub_id), None)
-            if row_idx:
-                ws.delete_rows(row_idx)
-        except Exception:
-            pass
+        records = ws.get_all_records()
+        row_idx = next((i + 2 for i, r in enumerate(records) if r.get("submission_id") == sub_id), None)
+        if row_idx:
+            ws.delete_rows(row_idx)
     else:
-        try:
-            with open(NOTES_FILE, "w") as f:
-                json.dump(notes_data, f, indent=2)
-        except Exception:
-            pass
+        with open(NOTES_FILE, "w") as f:
+            json.dump(notes_data, f, indent=2)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -605,16 +570,10 @@ def generate_pdf(row, notes_data):
     target   = safe(row.get("12-Month Target Price", ""))
     sub_date = safe(row.get("Submission Date", ""))
 
-    linkedin  = safe(row.get("LinkedIn URL", ""))
-    twitter_r = safe(row.get("Twitter (X) Username or URL", ""))
-
     story.append(Paragraph(f"{rl_escape(ticker)} — {rl_escape(name)}", H1))
-    contact_parts = [rl_escape(email), rl_escape(phone)]
-    if linkedin:
-        contact_parts.append(f"LinkedIn: {rl_escape(linkedin)}")
-    if twitter_r:
-        contact_parts.append(f"X: {rl_escape(twitter_r)}")
-    story.append(Paragraph("&nbsp;&nbsp;|&nbsp;&nbsp;".join(contact_parts), SUB))
+    story.append(Paragraph(
+        f"{rl_escape(email)}&nbsp;&nbsp;|&nbsp;&nbsp;{rl_escape(phone)}", SUB
+    ))
     story.append(HRFlowable(width="100%", thickness=2, color=NAVY, spaceAfter=10))
 
     tbl_data = [
@@ -694,33 +653,15 @@ def render_detail(row, notes_data):
     sub_id = row.get("submission_id", make_id(row))
     note   = notes_data.get(sub_id, {})
 
-    name      = safe(row.get("Name", ""))
-    ticker    = safe(row.get("Primary Company (Ticker)", ""))
-    email     = safe(row.get("Email", ""))
-    phone     = safe(row.get("Phone", ""))
-    sector    = safe(row.get("Sector / Industry", ""))
-    mktcap    = safe(row.get("Market Capitalization", ""))
-    target    = safe(row.get("12-Month Target Price", ""))
-    sub_date  = safe(row.get("Submission Date", ""))
-    linkedin  = safe(row.get("LinkedIn URL", ""))
-    twitter   = safe(row.get("Twitter (X) Username or URL", ""))
+    name     = safe(row.get("Name", ""))
+    ticker   = safe(row.get("Primary Company (Ticker)", ""))
+    email    = safe(row.get("Email", ""))
+    phone    = safe(row.get("Phone", ""))
+    sector   = safe(row.get("Sector / Industry", ""))
+    mktcap   = safe(row.get("Market Capitalization", ""))
+    target   = safe(row.get("12-Month Target Price", ""))
+    sub_date = safe(row.get("Submission Date", ""))
     is_starred = note.get("starred", False)
-
-    def normalize_url(url, default_prefix="https://"):
-        if not url:
-            return ""
-        url = url.strip()
-        if url.startswith("http://") or url.startswith("https://"):
-            return url
-        return default_prefix + url
-
-    def twitter_url(t):
-        if not t:
-            return ""
-        t = t.strip()
-        if t.startswith("http://") or t.startswith("https://"):
-            return t
-        return f"https://x.com/{t.lstrip('@')}"
 
     # ── Header ──
     h_left, h_right = st.columns([3, 1])
@@ -774,21 +715,6 @@ def render_detail(row, notes_data):
     c1.metric("Market Cap", mktcap or "—")
     c2.metric("12-Mo Target", f"${target}" if target and not target.startswith("$") else target or "—")
     c3.metric("Sector", sector or "—")
-
-    if linkedin or twitter:
-        sc = st.columns([1, 1, 4])
-        if linkedin:
-            li_url = normalize_url(linkedin, "https://linkedin.com/in/")
-            try:
-                sc[0].link_button("🔗 LinkedIn", li_url)
-            except Exception:
-                sc[0].markdown(f"[🔗 LinkedIn]({li_url})", unsafe_allow_html=True)
-        if twitter:
-            tw_url = twitter_url(twitter)
-            try:
-                sc[1].link_button("X / Twitter", tw_url)
-            except Exception:
-                sc[1].markdown(f"[X / Twitter]({tw_url})", unsafe_allow_html=True)
 
     st.divider()
 
