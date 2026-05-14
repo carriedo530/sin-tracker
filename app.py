@@ -281,9 +281,11 @@ def save_submissions_to_sheet(df):
     ws = get_worksheet("Submissions", SUBMISSION_COLS)
     if ws is None:
         return
-    rows = [[safe(row.get(c, "")) for c in SUBMISSION_COLS] for _, row in df.iterrows()]
+    extra_cols = [c for c in df.columns if c not in SUBMISSION_COLS]
+    all_cols = SUBMISSION_COLS + extra_cols
+    rows = [[safe(row.get(c, "")) for c in all_cols] for _, row in df.iterrows()]
     ws.clear()
-    ws.append_row(SUBMISSION_COLS)
+    ws.append_row(all_cols)
     if rows:
         ws.append_rows(rows)
     st.session_state.submissions_cache = df
@@ -389,6 +391,20 @@ def parse_name(raw):
 def safe(val):
     v = str(val).strip()
     return "" if v in ("nan", "None", "") else v
+
+
+def normalize_url(url):
+    url = url.strip()
+    if url and not url.startswith(("http://", "https://")):
+        return "https://" + url
+    return url
+
+
+def twitter_url(val):
+    val = val.strip().lstrip("@")
+    if val.startswith(("http://", "https://")):
+        return val
+    return f"https://x.com/{val}"
 
 
 def rl_escape(text):
@@ -570,10 +586,16 @@ def generate_pdf(row, notes_data):
     target   = safe(row.get("12-Month Target Price", ""))
     sub_date = safe(row.get("Submission Date", ""))
 
+    linkedin_pdf = safe(row.get("LinkedIn URL", ""))
+    twitter_pdf  = safe(row.get("Twitter (X) Username or URL", ""))
+
     story.append(Paragraph(f"{rl_escape(ticker)} — {rl_escape(name)}", H1))
-    story.append(Paragraph(
-        f"{rl_escape(email)}&nbsp;&nbsp;|&nbsp;&nbsp;{rl_escape(phone)}", SUB
-    ))
+    contact_parts = [rl_escape(email), rl_escape(phone)]
+    if linkedin_pdf:
+        contact_parts.append(f"LinkedIn: {rl_escape(linkedin_pdf)}")
+    if twitter_pdf:
+        contact_parts.append(f"X/Twitter: {rl_escape(twitter_pdf.lstrip('@'))}")
+    story.append(Paragraph("&nbsp;&nbsp;|&nbsp;&nbsp;".join(p for p in contact_parts if p), SUB))
     story.append(HRFlowable(width="100%", thickness=2, color=NAVY, spaceAfter=10))
 
     tbl_data = [
@@ -715,6 +737,17 @@ def render_detail(row, notes_data):
     c1.metric("Market Cap", mktcap or "—")
     c2.metric("12-Mo Target", f"${target}" if target and not target.startswith("$") else target or "—")
     c3.metric("Sector", sector or "—")
+
+    linkedin_raw = safe(row.get("LinkedIn URL", ""))
+    twitter_raw  = safe(row.get("Twitter (X) Username or URL", ""))
+    if linkedin_raw or twitter_raw:
+        s_cols = st.columns([1, 1, 4])
+        if linkedin_raw:
+            with s_cols[0]:
+                st.link_button("LinkedIn", normalize_url(linkedin_raw))
+        if twitter_raw:
+            with s_cols[1]:
+                st.link_button("X / Twitter", twitter_url(twitter_raw))
 
     st.divider()
 
