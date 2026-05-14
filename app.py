@@ -245,7 +245,13 @@ def get_worksheet(tab_name, headers):
     if cache_key in st.session_state:
         return st.session_state[cache_key]
     try:
-        ws = ss.worksheet(tab_name)
+        try:
+            ws = ss.worksheet(tab_name)
+        except gspread.WorksheetNotFound:
+            ws = ss.add_worksheet(tab_name, rows=2000, cols=len(headers))
+            ws.append_row(headers)
+            st.session_state[cache_key] = ws
+            return ws
         try:
             existing = ws.row_values(1)
             if len(existing) < len(headers):
@@ -253,11 +259,10 @@ def get_worksheet(tab_name, headers):
                     ws.update_cell(1, i + 1, headers[i])
         except Exception:
             pass
-    except gspread.WorksheetNotFound:
-        ws = ss.add_worksheet(tab_name, rows=2000, cols=len(headers))
-        ws.append_row(headers)
-    st.session_state[cache_key] = ws
-    return ws
+        st.session_state[cache_key] = ws
+        return ws
+    except Exception:
+        return None
 
 
 # ── Submissions ───────────────────────────────────────────────────────────────
@@ -268,7 +273,10 @@ def load_submissions_from_sheet():
     ws = get_worksheet("Submissions", SUBMISSION_COLS)
     if ws is None:
         return None
-    records = ws.get_all_records()
+    try:
+        records = ws.get_all_records()
+    except Exception:
+        return None
     if not records:
         return None
     df = pd.DataFrame(records)
@@ -297,14 +305,20 @@ def load_notes():
         return st.session_state.notes_cache
     ws = get_worksheet("Notes", NOTE_COLS)
     if ws is not None:
-        records = ws.get_all_records()
-        notes = {
-            r["submission_id"]: {k: r.get(k, "") for k in NOTE_COLS[1:]}
-            for r in records if r.get("submission_id")
-        }
+        try:
+            records = ws.get_all_records()
+            notes = {
+                r["submission_id"]: {k: r.get(k, "") for k in NOTE_COLS[1:]}
+                for r in records if r.get("submission_id")
+            }
+        except Exception:
+            notes = {}
     elif os.path.exists(NOTES_FILE):
-        with open(NOTES_FILE) as f:
-            notes = json.load(f)
+        try:
+            with open(NOTES_FILE) as f:
+                notes = json.load(f)
+        except Exception:
+            notes = {}
     else:
         notes = {}
     st.session_state.notes_cache = notes
@@ -316,16 +330,19 @@ def save_note(notes_data, sub_id, note):
     st.session_state.notes_cache = notes_data
     ws = get_worksheet("Notes", NOTE_COLS)
     if ws is not None:
-        row_values = [sub_id] + [note.get(k, "") for k in NOTE_COLS[1:]]
-        records = ws.get_all_records()
-        existing = next(
-            (i + 2 for i, r in enumerate(records) if r.get("submission_id") == sub_id), None
-        )
-        col_letter = chr(ord("A") + len(NOTE_COLS) - 1)
-        if existing:
-            ws.update(f"A{existing}:{col_letter}{existing}", [row_values])
-        else:
-            ws.append_row(row_values)
+        try:
+            row_values = [sub_id] + [note.get(k, "") for k in NOTE_COLS[1:]]
+            records = ws.get_all_records()
+            existing = next(
+                (i + 2 for i, r in enumerate(records) if r.get("submission_id") == sub_id), None
+            )
+            col_letter = chr(ord("A") + len(NOTE_COLS) - 1)
+            if existing:
+                ws.update(f"A{existing}:{col_letter}{existing}", [row_values])
+            else:
+                ws.append_row(row_values)
+        except Exception:
+            pass
     else:
         with open(NOTES_FILE, "w") as f:
             json.dump(notes_data, f, indent=2)
@@ -371,13 +388,19 @@ def delete_note(notes_data, sub_id):
     st.session_state.notes_cache = notes_data
     ws = get_worksheet("Notes", NOTE_COLS)
     if ws is not None:
-        records = ws.get_all_records()
-        row_idx = next((i + 2 for i, r in enumerate(records) if r.get("submission_id") == sub_id), None)
-        if row_idx:
-            ws.delete_rows(row_idx)
+        try:
+            records = ws.get_all_records()
+            row_idx = next((i + 2 for i, r in enumerate(records) if r.get("submission_id") == sub_id), None)
+            if row_idx:
+                ws.delete_rows(row_idx)
+        except Exception:
+            pass
     else:
-        with open(NOTES_FILE, "w") as f:
-            json.dump(notes_data, f, indent=2)
+        try:
+            with open(NOTES_FILE, "w") as f:
+                json.dump(notes_data, f, indent=2)
+        except Exception:
+            pass
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
