@@ -672,11 +672,19 @@ def render_detail(row, notes_data):
     twitter   = safe(row.get("Twitter (X) Username or URL", ""))
     is_starred = note.get("starred", False)
 
+    def normalize_url(url, default_prefix="https://"):
+        if not url:
+            return ""
+        url = url.strip()
+        if url.startswith("http://") or url.startswith("https://"):
+            return url
+        return default_prefix + url
+
     def twitter_url(t):
         if not t:
             return ""
         t = t.strip()
-        if t.startswith("http"):
+        if t.startswith("http://") or t.startswith("https://"):
             return t
         return f"https://x.com/{t.lstrip('@')}"
 
@@ -736,9 +744,17 @@ def render_detail(row, notes_data):
     if linkedin or twitter:
         sc = st.columns([1, 1, 4])
         if linkedin:
-            sc[0].link_button("🔗 LinkedIn", linkedin)
+            li_url = normalize_url(linkedin, "https://linkedin.com/in/")
+            try:
+                sc[0].link_button("🔗 LinkedIn", li_url)
+            except Exception:
+                sc[0].markdown(f"[🔗 LinkedIn]({li_url})", unsafe_allow_html=True)
         if twitter:
-            sc[1].link_button("X / Twitter", twitter_url(twitter))
+            tw_url = twitter_url(twitter)
+            try:
+                sc[1].link_button("X / Twitter", tw_url)
+            except Exception:
+                sc[1].markdown(f"[X / Twitter]({tw_url})", unsafe_allow_html=True)
 
     st.divider()
 
