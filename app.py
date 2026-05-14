@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import json
 import os
-import threading
 from datetime import datetime, date, timedelta
 from io import BytesIO
 import html
@@ -221,30 +220,22 @@ st.markdown("""
 def get_spreadsheet():
     if not GSHEETS_AVAILABLE:
         return None
-    result = [None]
-
-    def _connect():
+    try:
+        creds = Credentials.from_service_account_info(
+            dict(st.secrets["gcp_service_account"]),
+            scopes=[
+                "https://spreadsheets.google.com/feeds",
+                "https://www.googleapis.com/auth/drive",
+            ],
+        )
+        client = gspread.authorize(creds)
+        name = st.secrets.get("google_sheet", {}).get("name", "SIN Tracker Notes")
         try:
-            creds = Credentials.from_service_account_info(
-                dict(st.secrets["gcp_service_account"]),
-                scopes=[
-                    "https://spreadsheets.google.com/feeds",
-                    "https://www.googleapis.com/auth/drive",
-                ],
-            )
-            client = gspread.authorize(creds)
-            name = st.secrets.get("google_sheet", {}).get("name", "SIN Tracker Notes")
-            try:
-                result[0] = client.open(name)
-            except gspread.SpreadsheetNotFound:
-                result[0] = client.create(name)
-        except Exception:
-            pass
-
-    t = threading.Thread(target=_connect, daemon=True)
-    t.start()
-    t.join(timeout=15)
-    return result[0]
+            return client.open(name)
+        except gspread.SpreadsheetNotFound:
+            return client.create(name)
+    except Exception:
+        return None
 
 
 def get_worksheet(tab_name, headers):
@@ -289,11 +280,15 @@ def load_submissions_from_sheet():
         return None
     if not records:
         return None
-    df = pd.DataFrame(records)
-    df["Submission Time"] = pd.to_datetime(df["Submission Time"], utc=True, errors="coerce")
-    df["Submission Date"] = df["Submission Time"].dt.strftime("%Y-%m-%d")
-    st.session_state.submissions_cache = df
-    return df
+    try:
+        df = pd.DataFrame(records)
+        if "Submission Time" in df.columns:
+            df["Submission Time"] = pd.to_datetime(df["Submission Time"], utc=True, errors="coerce")
+            df["Submission Date"] = df["Submission Time"].dt.strftime("%Y-%m-%d")
+        st.session_state.submissions_cache = df
+        return df
+    except Exception:
+        return None
 
 
 def save_submissions_to_sheet(df):
