@@ -28,8 +28,9 @@ SUBMISSION_COLS = [
     "Sector / Industry", "Primary Company (Ticker)", "Market Capitalization",
     "12-Month Target Price", "Professional Bio", "Your Edge",
     "Investment Summary", "Model or Supporting Materials Work",
-    "LinkedIn URL", "Twitter (X) Username or URL",
 ]
+# Social columns stored alongside submissions but not in the fixed sheet schema
+SOCIAL_COLS = ["LinkedIn URL", "Twitter (X) Username or URL"]
 NOTE_COLS = [
     "submission_id", "status", "meeting_date", "followup_date",
     "meeting_notes", "followup_notes", "starred", "last_updated", "notes_log",
@@ -296,14 +297,20 @@ def load_submissions_from_sheet():
 
 
 def save_submissions_to_sheet(df):
-    ws = get_worksheet("Submissions", SUBMISSION_COLS)
+    # Determine which extra columns are present in this upload
+    extra_cols = [c for c in SOCIAL_COLS if c in df.columns]
+    all_cols = SUBMISSION_COLS + extra_cols
+    ws = get_worksheet("Submissions", all_cols)
     if ws is None:
         return
-    rows = [[safe(row.get(c, "")) for c in SUBMISSION_COLS] for _, row in df.iterrows()]
-    ws.clear()
-    ws.append_row(SUBMISSION_COLS)
-    if rows:
-        ws.append_rows(rows)
+    try:
+        rows = [[safe(row.get(c, "")) for c in all_cols] for _, row in df.iterrows()]
+        ws.clear()
+        ws.append_row(all_cols)
+        if rows:
+            ws.append_rows(rows)
+    except Exception:
+        pass
     st.session_state.submissions_cache = df
 
 
