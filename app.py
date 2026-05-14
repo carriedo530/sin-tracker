@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import json
 import os
+import threading
 from datetime import datetime, date, timedelta
 from io import BytesIO
 import html
@@ -219,22 +220,30 @@ st.markdown("""
 def get_spreadsheet():
     if not GSHEETS_AVAILABLE:
         return None
-    try:
-        creds = Credentials.from_service_account_info(
-            dict(st.secrets["gcp_service_account"]),
-            scopes=[
-                "https://spreadsheets.google.com/feeds",
-                "https://www.googleapis.com/auth/drive",
-            ],
-        )
-        client = gspread.authorize(creds)
-        name = st.secrets.get("google_sheet", {}).get("name", "SIN Tracker Notes")
+    result = [None]
+
+    def _connect():
         try:
-            return client.open(name)
-        except gspread.SpreadsheetNotFound:
-            return client.create(name)
-    except Exception:
-        return None
+            creds = Credentials.from_service_account_info(
+                dict(st.secrets["gcp_service_account"]),
+                scopes=[
+                    "https://spreadsheets.google.com/feeds",
+                    "https://www.googleapis.com/auth/drive",
+                ],
+            )
+            client = gspread.authorize(creds)
+            name = st.secrets.get("google_sheet", {}).get("name", "SIN Tracker Notes")
+            try:
+                result[0] = client.open(name)
+            except gspread.SpreadsheetNotFound:
+                result[0] = client.create(name)
+        except Exception:
+            pass
+
+    t = threading.Thread(target=_connect, daemon=True)
+    t.start()
+    t.join(timeout=15)
+    return result[0]
 
 
 def get_worksheet(tab_name, headers):
