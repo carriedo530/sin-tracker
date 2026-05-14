@@ -27,6 +27,7 @@ SUBMISSION_COLS = [
     "Sector / Industry", "Primary Company (Ticker)", "Market Capitalization",
     "12-Month Target Price", "Professional Bio", "Your Edge",
     "Investment Summary", "Model or Supporting Materials Work",
+    "LinkedIn URL", "Twitter (X) Username or URL",
 ]
 NOTE_COLS = [
     "submission_id", "status", "meeting_date", "followup_date",
@@ -570,10 +571,16 @@ def generate_pdf(row, notes_data):
     target   = safe(row.get("12-Month Target Price", ""))
     sub_date = safe(row.get("Submission Date", ""))
 
+    linkedin  = safe(row.get("LinkedIn URL", ""))
+    twitter_r = safe(row.get("Twitter (X) Username or URL", ""))
+
     story.append(Paragraph(f"{rl_escape(ticker)} — {rl_escape(name)}", H1))
-    story.append(Paragraph(
-        f"{rl_escape(email)}&nbsp;&nbsp;|&nbsp;&nbsp;{rl_escape(phone)}", SUB
-    ))
+    contact_parts = [rl_escape(email), rl_escape(phone)]
+    if linkedin:
+        contact_parts.append(f"LinkedIn: {rl_escape(linkedin)}")
+    if twitter_r:
+        contact_parts.append(f"X: {rl_escape(twitter_r)}")
+    story.append(Paragraph("&nbsp;&nbsp;|&nbsp;&nbsp;".join(contact_parts), SUB))
     story.append(HRFlowable(width="100%", thickness=2, color=NAVY, spaceAfter=10))
 
     tbl_data = [
@@ -653,15 +660,25 @@ def render_detail(row, notes_data):
     sub_id = row.get("submission_id", make_id(row))
     note   = notes_data.get(sub_id, {})
 
-    name     = safe(row.get("Name", ""))
-    ticker   = safe(row.get("Primary Company (Ticker)", ""))
-    email    = safe(row.get("Email", ""))
-    phone    = safe(row.get("Phone", ""))
-    sector   = safe(row.get("Sector / Industry", ""))
-    mktcap   = safe(row.get("Market Capitalization", ""))
-    target   = safe(row.get("12-Month Target Price", ""))
-    sub_date = safe(row.get("Submission Date", ""))
+    name      = safe(row.get("Name", ""))
+    ticker    = safe(row.get("Primary Company (Ticker)", ""))
+    email     = safe(row.get("Email", ""))
+    phone     = safe(row.get("Phone", ""))
+    sector    = safe(row.get("Sector / Industry", ""))
+    mktcap    = safe(row.get("Market Capitalization", ""))
+    target    = safe(row.get("12-Month Target Price", ""))
+    sub_date  = safe(row.get("Submission Date", ""))
+    linkedin  = safe(row.get("LinkedIn URL", ""))
+    twitter   = safe(row.get("Twitter (X) Username or URL", ""))
     is_starred = note.get("starred", False)
+
+    def twitter_url(t):
+        if not t:
+            return ""
+        t = t.strip()
+        if t.startswith("http"):
+            return t
+        return f"https://x.com/{t.lstrip('@')}"
 
     # ── Header ──
     h_left, h_right = st.columns([3, 1])
@@ -680,9 +697,16 @@ def render_detail(row, notes_data):
                 save_note(notes_data, sub_id, updated)
                 st.rerun()
         with info_col:
+            social_parts = []
+            if linkedin:
+                social_parts.append(f"<a href='{linkedin}' target='_blank' style='color:#0a66c2;text-decoration:none;pointer-events:auto;'>LinkedIn</a>")
+            if twitter:
+                tw_url = twitter_url(twitter)
+                social_parts.append(f"<a href='{tw_url}' target='_blank' style='color:#1da1f2;text-decoration:none;pointer-events:auto;'>X / Twitter</a>")
+            social_html = ("  ·  " + "  ·  ".join(social_parts)) if social_parts else ""
             st.markdown(
                 f"<p style='color:#8896a5;font-size:0.83rem;margin:0;padding-top:6px;'>"
-                f"{html.escape(email)}  ·  {html.escape(phone)}  ·  Submitted {sub_date}</p>",
+                f"{html.escape(email)}  ·  {html.escape(phone)}  ·  Submitted {sub_date}{social_html}</p>",
                 unsafe_allow_html=True,
             )
 
