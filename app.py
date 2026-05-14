@@ -708,6 +708,8 @@ def render_detail(row, notes_data):
             mime="application/pdf", key=f"pdf_{sub_id}",
             use_container_width=True,
         )
+        if st.button("🗑️ Delete", key=f"del_{sub_id}", use_container_width=True, help="Delete this submission"):
+            confirm_bulk_delete([sub_id], [f"{ticker} · {name}"], notes_data)
 
     c1, c2, c3 = st.columns(3)
     c1.metric("Market Cap", mktcap or "—")
