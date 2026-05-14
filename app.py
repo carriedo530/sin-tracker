@@ -697,16 +697,9 @@ def render_detail(row, notes_data):
                 save_note(notes_data, sub_id, updated)
                 st.rerun()
         with info_col:
-            social_parts = []
-            if linkedin:
-                social_parts.append(f"<a href='{linkedin}' target='_blank' style='color:#0a66c2;text-decoration:none;pointer-events:auto;'>LinkedIn</a>")
-            if twitter:
-                tw_url = twitter_url(twitter)
-                social_parts.append(f"<a href='{tw_url}' target='_blank' style='color:#1da1f2;text-decoration:none;pointer-events:auto;'>X / Twitter</a>")
-            social_html = ("  ·  " + "  ·  ".join(social_parts)) if social_parts else ""
             st.markdown(
                 f"<p style='color:#8896a5;font-size:0.83rem;margin:0;padding-top:6px;'>"
-                f"{html.escape(email)}  ·  {html.escape(phone)}  ·  Submitted {sub_date}{social_html}</p>",
+                f"{html.escape(email)}  ·  {html.escape(phone)}  ·  Submitted {sub_date}</p>",
                 unsafe_allow_html=True,
             )
 
@@ -739,6 +732,13 @@ def render_detail(row, notes_data):
     c1.metric("Market Cap", mktcap or "—")
     c2.metric("12-Mo Target", f"${target}" if target and not target.startswith("$") else target or "—")
     c3.metric("Sector", sector or "—")
+
+    if linkedin or twitter:
+        sc = st.columns([1, 1, 4])
+        if linkedin:
+            sc[0].link_button("🔗 LinkedIn", linkedin)
+        if twitter:
+            sc[1].link_button("𝕏 Twitter", twitter_url(twitter))
 
     st.divider()
 
