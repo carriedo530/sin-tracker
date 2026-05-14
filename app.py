@@ -191,6 +191,9 @@ st.markdown("""
       background: #f7f9fc !important; color: #1a2744 !important;
       border: 1px solid #c9a040 !important; border-radius: 6px !important; font-weight: 500 !important;
   }
+  button[kind="secondary"][data-testid*="del_"] {
+      color: #c0392b !important; border-color: #e8a89c !important;
+  }
   hr { border-color: #e2e6ea !important; margin: 1.2rem 0 !important; }
   .stCaption { color: #8896a5 !important; font-size: 0.82rem !important; }
 
@@ -325,6 +328,30 @@ def save_note(notes_data, sub_id, note):
     else:
         with open(NOTES_FILE, "w") as f:
             json.dump(notes_data, f, indent=2)
+
+
+def delete_submission(sub_id, notes_data):
+    df = st.session_state.get("submissions_cache")
+    if df is not None:
+        df = df[df["submission_id"] != sub_id].reset_index(drop=True)
+        save_submissions_to_sheet(df)
+    delete_note(notes_data, sub_id)
+    for key in ["selected_id", "tracked_selected", "fav_selected"]:
+        if st.session_state.get(key) == sub_id:
+            st.session_state[key] = None
+
+
+@st.dialog("Confirm Delete")
+def confirm_delete_dialog(sub_id, name, ticker, notes_data):
+    st.warning(f"Permanently delete **{ticker} — {name}**? This removes it for everyone and cannot be undone.")
+    c1, c2 = st.columns(2)
+    with c1:
+        if st.button("🗑️ Yes, Delete", type="primary", use_container_width=True):
+            delete_submission(sub_id, notes_data)
+            st.rerun()
+    with c2:
+        if st.button("Cancel", use_container_width=True):
+            st.rerun()
 
 
 def delete_note(notes_data, sub_id):
@@ -670,6 +697,8 @@ def render_detail(row, notes_data):
             mime="application/pdf", key=f"pdf_{sub_id}",
             use_container_width=True,
         )
+        if st.button("🗑️ Delete", key=f"del_{sub_id}", use_container_width=True, help="Remove this submission"):
+            confirm_delete_dialog(sub_id, name, ticker, notes_data)
 
     c1, c2, c3 = st.columns(3)
     c1.metric("Market Cap", mktcap or "—")
