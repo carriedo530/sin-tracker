@@ -342,12 +342,23 @@ def delete_submission(sub_id, notes_data):
 
 
 @st.dialog("Confirm Delete")
-def confirm_delete_dialog(sub_id, name, ticker, notes_data):
-    st.warning(f"Permanently delete **{ticker} — {name}**? This removes it for everyone and cannot be undone.")
+def confirm_bulk_delete(ids_to_delete, labels, notes_data):
+    st.warning(f"Permanently delete **{len(ids_to_delete)} submission(s)**? This cannot be undone.")
+    for lbl in labels:
+        st.markdown(f"- {lbl}")
+    st.divider()
     c1, c2 = st.columns(2)
     with c1:
-        if st.button("🗑️ Yes, Delete", type="primary", use_container_width=True):
-            delete_submission(sub_id, notes_data)
+        if st.button("🗑️ Yes, Delete All", type="primary", use_container_width=True):
+            df = st.session_state.get("submissions_cache")
+            if df is not None:
+                df = df[~df["submission_id"].isin(ids_to_delete)].reset_index(drop=True)
+                save_submissions_to_sheet(df)
+            for sid in ids_to_delete:
+                delete_note(notes_data, sid)
+            for key in ["selected_id", "tracked_selected", "fav_selected"]:
+                if st.session_state.get(key) in ids_to_delete:
+                    st.session_state[key] = None
             st.rerun()
     with c2:
         if st.button("Cancel", use_container_width=True):
@@ -697,8 +708,6 @@ def render_detail(row, notes_data):
             mime="application/pdf", key=f"pdf_{sub_id}",
             use_container_width=True,
         )
-        if st.button("🗑️ Delete", key=f"del_{sub_id}", use_container_width=True, help="Remove this submission"):
-            confirm_delete_dialog(sub_id, name, ticker, notes_data)
 
     c1, c2, c3 = st.columns(3)
     c1.metric("Market Cap", mktcap or "—")
@@ -747,7 +756,7 @@ def main():
         )
         search = st.text_input("Search", placeholder="🔍 Search name, ticker, email", label_visibility="collapsed")
         st.divider()
-        view = st.radio("View", ["📋  All Submissions", "📝  Notes", "⭐  Favorites"], label_visibility="collapsed")
+        view = st.radio("View", ["📋  All Submissions", "📝  Notes", "⭐  Favorites", "🗑️  Manage"], label_visibility="collapsed")
         st.divider()
         uploaded = st.file_uploader("📤 Upload new export", type=["csv", "xlsx", "xls"], label_visibility="collapsed")
         st.divider()
@@ -882,7 +891,7 @@ def main():
                              type="primary" if st.session_state.get(selected_key) == sub_id else "secondary"):
                     st.session_state[selected_key] = sub_id
                     st.rerun()
-        else:
+        elif "⭐" in view:
             selected_key = "fav_selected"
             fav_rows = [row for _, row in filtered.iterrows()
                         if notes_data.get(row["submission_id"], {}).get("starred")]
@@ -895,7 +904,6 @@ def main():
                 icon   = STATUS_ICONS.get(status, "⚪")
                 name   = safe(row.get("Name", "Unknown"))
                 ticker = safe(row.get("Primary Company (Ticker)", "—"))
-                sector = safe(row.get("Sector / Industry", ""))
                 label  = f"⭐ **{ticker}**  ·  {name}"
                 if st.button(label, key=f"fav_{sub_id}", use_container_width=True,
                              type="primary" if st.session_state.get(selected_key) == sub_id else "secondary"):
@@ -904,28 +912,51 @@ def main():
 
     # ── Detail panel (right column) ──
     with col_detail:
-        sel_id = st.session_state.get(selected_key)
-        if sel_id is None:
-            st.markdown(
-                "<div style='margin-top:3rem;text-align:center;color:#8896a5;'>"
-                "<p style='font-size:2rem;'>←</p>"
-                "<p>Select a submission to view details</p></div>",
-                unsafe_allow_html=True,
-            )
+        if "🗑️" not in view:
+            sel_id = st.session_state.get(selected_key)
+            if sel_id is None:
+                st.markdown(
+                    "<div style='margin-top:3rem;text-align:center;color:#8896a5;'>"
+                    "<p style='font-size:2rem;'>←</p>"
+                    "<p>Select a submission to view details</p></div>",
+                    unsafe_allow_html=True,
+                )
+            else:
+                if "📋" in view:
+                    match = filtered[filtered["submission_id"] == sel_id]
+                    row = match.iloc[0] if not match.empty else None
+                elif "📝" in view:
+                    match = [r for r in tracked_rows if r["submission_id"] == sel_id]
+                    row = match[0] if match else None
+                else:
+                    match = [r for r in fav_rows if r["submission_id"] == sel_id]
+                    row = match[0] if match else None
+                if row is not None:
+                    render_detail(row, notes_data)
+                else:
+                    st.info("Select a submission to view details.")
+
+    # ── Manage / bulk delete (full width below columns) ──
+    if "🗑️" in view:
+        st.markdown("**Select submissions to delete:**")
+        st.caption("Check the ones you want to remove, then click Delete Selected.")
+        to_delete_ids = []
+        to_delete_labels = []
+        for _, row in filtered.iterrows():
+            sub_id = row["submission_id"]
+            name   = safe(row.get("Name", "Unknown"))
+            ticker = safe(row.get("Primary Company (Ticker)", "—"))
+            sdate  = safe(row.get("Submission Date", ""))
+            label  = f"**{ticker}** · {name}  —  {sdate}"
+            if st.checkbox(label, key=f"delcheck_{sub_id}"):
+                to_delete_ids.append(sub_id)
+                to_delete_labels.append(f"{ticker} · {name}")
+        st.divider()
+        if to_delete_ids:
+            if st.button(f"🗑️ Delete {len(to_delete_ids)} Selected", type="primary"):
+                confirm_bulk_delete(to_delete_ids, to_delete_labels, notes_data)
         else:
-            if "📋" in view:
-                match = filtered[filtered["submission_id"] == sel_id]
-                row = match.iloc[0] if not match.empty else None
-            elif "📝" in view:
-                match = [r for r in tracked_rows if r["submission_id"] == sel_id]
-                row = match[0] if match else None
-            else:
-                match = [r for r in fav_rows if r["submission_id"] == sel_id]
-                row = match[0] if match else None
-            if row is not None:
-                render_detail(row, notes_data)
-            else:
-                st.info("Select a submission to view details.")
+            st.caption("No submissions selected.")
 
 
 if __name__ == "__main__":
