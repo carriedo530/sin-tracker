@@ -911,7 +911,7 @@ def main():
                 if year != last_year:
                     st.markdown(f"<p style='font-size:0.7rem;font-weight:700;color:#8896a5;margin:10px 0 0 0;letter-spacing:0.08em;'>{year}</p>", unsafe_allow_html=True)
                     last_year = year
-                st.markdown(f"<p style='font-size:0.78rem;font-weight:600;color:#1a2744;margin:0 0 4px 0;'>— {day}</p>", unsafe_allow_html=True)
+                    st.markdown(f"<p style='font-size:0.78rem;font-weight:600;color:#1a2744;margin:0 0 4px 0;'>— {day}</p>", unsafe_allow_html=True)
                 for row in grouped[sdate]:
                     sub_id = row["submission_id"]
                     note   = notes_data.get(sub_id, {})
