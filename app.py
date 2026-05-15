@@ -219,15 +219,21 @@ def get_spreadsheet():
     if not GSHEETS_AVAILABLE:
         return None
     try:
+        gcp_json = os.environ.get("GCP_SERVICE_ACCOUNT_JSON")
+        if gcp_json:
+            service_account_info = json.loads(gcp_json)
+        else:
+            service_account_info = dict(st.secrets["gcp_service_account"])
         creds = Credentials.from_service_account_info(
-            dict(st.secrets["gcp_service_account"]),
+            service_account_info,
             scopes=[
                 "https://spreadsheets.google.com/feeds",
                 "https://www.googleapis.com/auth/drive",
             ],
         )
         client = gspread.authorize(creds)
-        name = st.secrets.get("google_sheet", {}).get("name", "SIN Tracker Notes")
+        name = (os.environ.get("GOOGLE_SHEET_NAME")
+                or st.secrets.get("google_sheet", {}).get("name", "SIN Tracker Notes"))
         try:
             return client.open(name)
         except gspread.SpreadsheetNotFound:
