@@ -894,21 +894,34 @@ def main():
             selected_key = "selected_id"
             if not rows_to_show:
                 st.warning("No submissions match the current filters.")
+            from collections import defaultdict
+            grouped = defaultdict(list)
             for _, row in rows_to_show:
-                sub_id = row["submission_id"]
-                note   = notes_data.get(sub_id, {})
-                status = note.get("status", "New")
-                icon   = STATUS_ICONS.get(status, "⚪")
-                name   = safe(row.get("Name", "Unknown"))
-                ticker = safe(row.get("Primary Company (Ticker)", "—"))
-                sector = safe(row.get("Sector / Industry", ""))
-                sdate  = safe(row.get("Submission Date", ""))
-                badge  = "  📝" if has_notes(note) else ""
-                label  = f"{icon}**{ticker}**  ·  {name}  |  {sdate}{badge}"
-                if st.button(label, key=f"btn_{sub_id}", use_container_width=True,
-                             type="primary" if st.session_state.get(selected_key) == sub_id else "secondary"):
-                    st.session_state[selected_key] = sub_id
-                    st.rerun()
+                sdate = safe(row.get("Submission Date", "Unknown"))
+                grouped[sdate].append(row)
+            for sdate in sorted(grouped.keys(), reverse=True):
+                try:
+                    dt = datetime.strptime(sdate, "%Y-%m-%d")
+                    year = dt.strftime("%Y")
+                    day  = dt.strftime("%b %-d")
+                except Exception:
+                    year = ""
+                    day  = sdate
+                st.markdown(f"<p style='font-size:0.7rem;font-weight:700;color:#8896a5;margin:10px 0 0 0;letter-spacing:0.08em;'>{year}</p>", unsafe_allow_html=True)
+                st.markdown(f"<p style='font-size:0.78rem;font-weight:600;color:#1a2744;margin:0 0 4px 0;'>— {day}</p>", unsafe_allow_html=True)
+                for row in grouped[sdate]:
+                    sub_id = row["submission_id"]
+                    note   = notes_data.get(sub_id, {})
+                    status = note.get("status", "New")
+                    icon   = STATUS_ICONS.get(status, "⚪")
+                    name   = safe(row.get("Name", "Unknown"))
+                    ticker = safe(row.get("Primary Company (Ticker)", "—"))
+                    badge  = "  📝" if has_notes(note) else ""
+                    label  = f"{icon}**{ticker}**  ·  {name}{badge}"
+                    if st.button(label, key=f"btn_{sub_id}", use_container_width=True,
+                                 type="primary" if st.session_state.get(selected_key) == sub_id else "secondary"):
+                        st.session_state[selected_key] = sub_id
+                        st.rerun()
         elif "📝" in view:
             selected_key = "tracked_selected"
             tracked_rows = [row for _, row in filtered.iterrows()
