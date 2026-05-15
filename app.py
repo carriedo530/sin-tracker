@@ -890,6 +890,7 @@ def main():
     with col_list:
         if "📋" in view:
             rows_to_show = list(filtered.iterrows())
+            rows_to_show = sorted(rows_to_show, key=lambda x: x[1].get("Submission Date", ""), reverse=True)
             selected_key = "selected_id"
             if not rows_to_show:
                 st.warning("No submissions match the current filters.")
@@ -903,7 +904,7 @@ def main():
                 sector = safe(row.get("Sector / Industry", ""))
                 sdate  = safe(row.get("Submission Date", ""))
                 badge  = "  📝" if has_notes(note) else ""
-                label  = f"{icon}**{ticker}**  ·  {name}{badge}"
+                label  = f"{icon}**{ticker}**  ·  {name}  |  {sdate}{badge}"
                 if st.button(label, key=f"btn_{sub_id}", use_container_width=True,
                              type="primary" if st.session_state.get(selected_key) == sub_id else "secondary"):
                     st.session_state[selected_key] = sub_id
