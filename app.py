@@ -899,6 +899,7 @@ def main():
             for _, row in rows_to_show:
                 sdate = safe(row.get("Submission Date", "Unknown"))
                 grouped[sdate].append(row)
+            last_year = None
             for sdate in sorted(grouped.keys(), reverse=True):
                 try:
                     dt = datetime.strptime(sdate, "%Y-%m-%d")
@@ -907,7 +908,9 @@ def main():
                 except Exception:
                     year = ""
                     day  = sdate
-                st.markdown(f"<p style='font-size:0.7rem;font-weight:700;color:#8896a5;margin:10px 0 0 0;letter-spacing:0.08em;'>{year}</p>", unsafe_allow_html=True)
+                if year != last_year:
+                    st.markdown(f"<p style='font-size:0.7rem;font-weight:700;color:#8896a5;margin:10px 0 0 0;letter-spacing:0.08em;'>{year}</p>", unsafe_allow_html=True)
+                    last_year = year
                 st.markdown(f"<p style='font-size:0.78rem;font-weight:600;color:#1a2744;margin:0 0 4px 0;'>— {day}</p>", unsafe_allow_html=True)
                 for row in grouped[sdate]:
                     sub_id = row["submission_id"]
