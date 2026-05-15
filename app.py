@@ -278,7 +278,7 @@ def load_submissions_from_sheet():
         return None
     df = pd.DataFrame(records)
     df["Submission Time"] = pd.to_datetime(df["Submission Time"], utc=True, errors="coerce")
-    df["Submission Date"] = df["Submission Time"].dt.strftime("%Y-%m-%d")
+    df["Submission Date"] = df["Submission Time"].dt.tz_convert("America/New_York").dt.strftime("%Y-%m-%d")
     st.session_state.submissions_cache = df
     return df
 
