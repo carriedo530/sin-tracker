@@ -774,12 +774,7 @@ def render_detail(row, notes_data):
 
     doc_link = safe(row.get("Model or Supporting Materials Work", ""))
     if doc_link:
-        st.markdown(
-            f"<p>📎 <a href='{doc_link}' target='_blank' "
-            f"style='color:#1a2744;font-weight:500;text-decoration:underline;pointer-events:auto;'>"
-            f"Download Supporting Materials</a></p>",
-            unsafe_allow_html=True,
-        )
+        st.link_button("📎 Download Supporting Materials", normalize_url(doc_link))
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
