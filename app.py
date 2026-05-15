@@ -268,8 +268,6 @@ def get_worksheet(tab_name, headers):
 # ── Submissions ───────────────────────────────────────────────────────────────
 
 def load_submissions_from_sheet():
-    if "submissions_cache" in st.session_state:
-        return st.session_state.submissions_cache
     ws = get_worksheet("Submissions", SUBMISSION_COLS)
     if ws is None:
         return None
