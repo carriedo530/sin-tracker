@@ -897,33 +897,32 @@ def main():
             for _, row in rows_to_show:
                 sdate = str(row["Submission Date"]).strip().lstrip("'")[:10]
                 grouped[sdate].append(row)
-                st.write(f"DEBUG: {sdate}")
             last_year = None
             for sdate in sorted(grouped.keys(), reverse=True):
                 try:
                     dt = datetime.strptime(sdate, "%Y-%m-%d")
                     year = dt.strftime("%Y")
-                    day  = dt.strftime("%b %-d")
+                    day = dt.strftime("%b %-d")
                 except Exception:
                     year = ""
-                    day  = sdate
+                    day = sdate
                 if year != last_year:
-                            st.markdown(f"<p style='font-size:0.7rem;font-weight:700;color:#8896a5;margin:10px 0 0 0;letter-spacing:0.08em;'>{year}</p>", unsafe_allow_html=True)
-                            last_year = year
-                            st.markdown(f"<p style='font-size:0.78rem;font-weight:600;color:#1a2744;margin:0 0 4px 0;'>— {day}</p>", unsafe_allow_html=True)
-                        for row in grouped[sdate]:
-                                sub_id = row["submission_id"]
-                                note   = notes_data.get(sub_id, {})
-                                status = note.get("status", "New")
-                                icon   = STATUS_ICONS.get(status, "⚪")
-                                name   = safe(row.get("Name", "Unknown"))
-                                ticker = safe(row.get("Primary Company (Ticker)", "—"))
-                                badge  = "  📝" if has_notes(note) else ""
-                            label  = f"{icon}**{ticker}**  ·  {name}{badge}"
-                            if st.button(label, key=f"btn_{sub_id}", use_container_width=True,
-                                         type="primary" if st.session_state.get(selected_key) == sub_id else "secondary"):
-                                st.session_state[selected_key] = sub_id
-                                st.rerun()
+                    st.markdown(f"<p style='font-size:0.7rem;font-weight:700;color:#8896a5;margin:10px 0 0 0;letter-spacing:0.08em;'>{year}</p>", unsafe_allow_html=True)
+                    last_year = year
+                st.markdown(f"<p style='font-size:0.78rem;font-weight:600;color:#1a2744;margin:0 0 4px 0;'>— {day}</p>", unsafe_allow_html=True)
+                for row in grouped[sdate]:
+                    sub_id = row["submission_id"]
+                    note = notes_data.get(sub_id, {})
+                    status = note.get("status", "New")
+                    icon = STATUS_ICONS.get(status, "⚪")
+                    name = safe(row.get("Name", "Unknown"))
+                    ticker = safe(row.get("Primary Company (Ticker)", "—"))
+                    badge = "  📝" if has_notes(note) else ""
+                    label = f"{icon}**{ticker}**  ·  {name}{badge}"
+                    if st.button(label, key=f"btn_{sub_id}", use_container_width=True,
+                                 type="primary" if st.session_state.get(selected_key) == sub_id else "secondary"):
+                        st.session_state[selected_key] = sub_id
+                        st.rerun()
         elif "📝" in view:
             selected_key = "tracked_selected"
             tracked_rows = [row for _, row in filtered.iterrows()
