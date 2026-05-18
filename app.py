@@ -47,24 +47,18 @@ st.set_page_config(
 )
 st.markdown("""
 <style>
-  /* ── Hide top-right toolbar & main menu ── */
   [data-testid="stToolbarActions"] { display: none !important; }
   #MainMenu { display: none !important; }
   [data-testid="stMainMenuButton"] { display: none !important; }
   header[data-testid="stHeader"] { background: transparent !important; }
-  /* Hide heading anchor link icons */
   [data-testid="stHeadingActionElements"],
   [data-testid="stHeadingActionElements"] * { display: none !important; visibility: hidden !important; opacity: 0 !important; }
   [data-testid="StyledLinkIconContainer"] { display: none !important; visibility: hidden !important; }
   h1 a, h2 a, h3 a { display: none !important; pointer-events: none !important; }
   h1 svg, h2 svg, h3 svg { display: none !important; }
-  /* Remove blue hyperlink styling everywhere in main content */
   .stMarkdown a[href^="mailto"],
   .stMarkdown a { color: inherit !important; text-decoration: none !important; pointer-events: none !important; cursor: default !important; }
-  /* No pointer cursor on any non-button element */
   p a, span a, div a:not([data-testid]) { cursor: default !important; }
-
-  /* ── Sidebar background & fixed padding ── */
   section[data-testid="stSidebar"],
   section[data-testid="stSidebar"] > div:first-child,
   section[data-testid="stSidebar"] > div {
@@ -75,8 +69,6 @@ st.markdown("""
       padding-right: 1rem !important;
       padding-top: 1rem !important;
   }
-
-  /* Sidebar text */
   section[data-testid="stSidebar"] p,
   section[data-testid="stSidebar"] label,
   section[data-testid="stSidebar"] .stMarkdown,
@@ -85,8 +77,6 @@ st.markdown("""
   }
   section[data-testid="stSidebar"] span { color: rgba(255,255,255,0.82) !important; }
   section[data-testid="stSidebar"] hr { border-color: rgba(255,255,255,0.15) !important; }
-
-  /* Sidebar search input only */
   section[data-testid="stSidebar"] [data-testid="stTextInput"] input {
       background: #ffffff !important;
       border-color: rgba(255,255,255,0.3) !important;
@@ -95,7 +85,6 @@ st.markdown("""
       -webkit-text-fill-color: #1a2744 !important;
   }
   section[data-testid="stSidebar"] [data-testid="stTextInput"] input::placeholder { color: #8896a5 !important; }
-  /* Multiselect / select boxes — white background, dark text */
   section[data-testid="stSidebar"] [data-baseweb="select"] > div,
   section[data-testid="stSidebar"] [data-baseweb="select"] > div > div {
       background: #ffffff !important;
@@ -115,12 +104,8 @@ st.markdown("""
       border-color: rgba(26,39,68,0.25) !important;
   }
   section[data-testid="stSidebar"] [data-baseweb="tag"] span { color: #1a2744 !important; }
-
-  /* Radio nav */
   section[data-testid="stSidebar"] [data-testid="stRadio"] label { color: rgba(255,255,255,0.82) !important; }
   section[data-testid="stSidebar"] [data-testid="stRadio"] [data-baseweb="radio"] div { border-color: rgba(255,255,255,0.4) !important; }
-
-  /* File uploader — compact single button */
   section[data-testid="stSidebar"] [data-testid="stFileUploader"] {
       background: transparent !important;
       border: none !important;
@@ -141,11 +126,7 @@ st.markdown("""
       color: rgba(255,255,255,0.85) !important; padding: 4px 8px !important;
   }
   section[data-testid="stSidebar"] [data-testid="stFileUploader"] * { color: rgba(255,255,255,0.85) !important; }
-
-  /* ── Main layout ── */
   .block-container { padding-top: 0.5rem !important; padding-left: 1.5rem !important; padding-right: 1.5rem !important; min-width: 700px !important; }
-
-  /* ── Submission list buttons ── */
   .stButton > button {
       display: flex !important;
       justify-content: flex-start !important;
@@ -176,15 +157,11 @@ st.markdown("""
   }
   .stButton > button[kind="primary"]:hover,
   [data-testid="baseButton-primary"]:hover { background: #243860 !important; border-color: #243860 !important; border-left-color: #c9a040 !important; }
-
-  /* ── Metrics ── */
   [data-testid="metric-container"] {
       background: #f7f9fc; border: 1px solid #e2e6ea; border-radius: 8px; padding: 10px 14px;
   }
   div[data-testid="stMetricValue"] { font-size: 1rem; font-weight: 600; color: #1a2744; }
   div[data-testid="stMetricLabel"] { font-size: 0.75rem; color: #6c757d; }
-
-  /* ── Misc ── */
   .stAlert { border-radius: 8px !important; }
   [data-testid="stExpander"] { border: 1px solid #e2e6ea !important; border-radius: 8px !important; }
   [data-testid="stDownloadButton"] button {
@@ -196,8 +173,6 @@ st.markdown("""
   }
   hr { border-color: #e2e6ea !important; margin: 1.2rem 0 !important; }
   .stCaption { color: #8896a5 !important; font-size: 0.82rem !important; }
-
-  /* ── Mobile ── */
   @media (max-width: 768px) {
     .block-container { min-width: unset !important; padding: 0.5rem 0.8rem !important; }
     [data-testid="stHorizontalBlock"] { flex-direction: column !important; }
@@ -496,7 +471,6 @@ def notes_dialog(sub_id, row, notes_data):
     followup_notes = st.text_area("Follow-up / Action Items", value=note.get("followup_notes", ""),
         placeholder="Next steps, requests, action items...", height=80)
 
-    # ── Notes log ──
     st.divider()
     st.markdown("**📋 Notes Log**")
     try:
@@ -689,7 +663,6 @@ def render_detail(row, notes_data):
     sub_date = safe(row.get("Submission Date", ""))
     is_starred = note.get("starred", False)
 
-    # ── Header ──
     h_left, h_right = st.columns([3, 1])
     with h_left:
         star_icon = "⭐" if is_starred else "☆"
@@ -698,7 +671,6 @@ def render_detail(row, notes_data):
             f"{html.escape(ticker)}  —  {html.escape(name)}</h2>",
             unsafe_allow_html=True,
         )
-        # Star button inline below title
         star_col, info_col = st.columns([1, 6])
         with star_col:
             if st.button(star_icon, key=f"star_{sub_id}", help="Star this submission"):
@@ -713,7 +685,6 @@ def render_detail(row, notes_data):
             )
 
     with h_right:
-        # Notes button
         if has_notes(note):
             status = note.get("status", "New")
             st.markdown(
@@ -726,7 +697,6 @@ def render_detail(row, notes_data):
         else:
             if st.button("📝 Add Notes", key=f"add_{sub_id}", use_container_width=True, type="primary"):
                 notes_dialog(sub_id, row, notes_data)
-        # PDF button — top right
         pdf_buf = generate_pdf(row, notes_data)
         st.download_button(
             "📄 Export PDF", data=pdf_buf,
@@ -873,7 +843,6 @@ def main():
     if "selected_id" not in st.session_state:
         st.session_state.selected_id = None
 
-    # ── Header ──
     st.markdown(
         "<h2 style='color:#1a2744;font-family:Georgia,serif;margin-top:0;margin-bottom:0.3rem;font-size:1.8rem;'>"
         "Specialist Insights Network</h2>",
@@ -887,12 +856,12 @@ def main():
     # ── Submission list (left column) ──
     with col_list:
         if "📋" in view:
+            from collections import defaultdict
             rows_to_show = list(filtered.iterrows())
             rows_to_show = sorted(rows_to_show, key=lambda x: x[1].get("Submission Date", ""), reverse=True)
             selected_key = "selected_id"
             if not rows_to_show:
                 st.warning("No submissions match the current filters.")
-            from collections import defaultdict
             grouped = defaultdict(list)
             for _, row in rows_to_show:
                 sdate = str(row["Submission Date"]).strip().lstrip("'")[:10]
@@ -936,7 +905,6 @@ def main():
                 icon   = STATUS_ICONS.get(status, "⚪")
                 name   = safe(row.get("Name", "Unknown"))
                 ticker = safe(row.get("Primary Company (Ticker)", "—"))
-                fu     = note.get("followup_date", "")
                 label  = f"{icon}**{ticker}**  ·  {name}"
                 if st.button(label, key=f"tracked_{sub_id}", use_container_width=True,
                              type="primary" if st.session_state.get(selected_key) == sub_id else "secondary"):
@@ -987,7 +955,7 @@ def main():
                 else:
                     st.info("Select a submission to view details.")
 
-    # ── Manage / bulk delete (full width below columns) ──
+    # ── Manage / bulk delete ──
     if "🗑️" in view:
         st.markdown("**Select submissions to delete:**")
         st.caption("Check the ones you want to remove, then click Delete Selected.")
