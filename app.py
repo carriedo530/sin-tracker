@@ -897,6 +897,7 @@ def main():
             for _, row in rows_to_show:
                 sdate = str(row.get("Submission Date", "Unknown")).strip().lstrip("'")[:10]
                 grouped[sdate].append(row)
+                st.write(f"DEBUG: {sdate}")
             last_year = None
             for sdate in sorted(grouped.keys(), reverse=True):
                 try:
