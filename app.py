@@ -275,6 +275,7 @@ def load_submissions_from_sheet():
     if not records:
         return None
     df = pd.DataFrame(records)
+    df["Submission Date"] = df["Submission Date"].astype(str).str.strip().str[:10]
     df["Submission Time"] = pd.to_datetime(df["Submission Time"], utc=True, errors="coerce")
     st.session_state.submissions_cache = df
     return df
